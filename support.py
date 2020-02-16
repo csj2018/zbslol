@@ -9,26 +9,89 @@ class State:
 class Player:
     def __init__(self,name =''):
         #基本属性，
-        self.num = 0
         self.name = name
         self.potential = 0
         self.damage = 0
         self.control = 0
         self.viability = 0
-        self.develop = 0
+        self.farm = 0
         self.carry = 0
         self.support = 0
-        self.state = 'C'#S A B C D E
+        self.state = 0 #S A B C D E
         self.fans = 0
-
+        self.site = 0 #上路 中路 下路 游走 辅助
+        self.level = 0
+        self.active = 0
+    def level_cal(self):
+        self.level = self.damage + self.control + self.viability + self.farm + self.carry + self.support#待定
+    def add_point(self, point):
+        self[str(point)] += 1
+    def random_power(self):
+        self.damage = random.randint(20, 80)
+        self.control = random.randint(20, 80)
+        self.viability = random.randint(20, 80)
+        self.farm = random.randint(20, 80)
+        self.carry = random.randint(20, 80)
+        self.support = random.randint(20, 80)
+        self.fans = random.randint(100, 10000)
 class Club:
     def __init__(self):
         self.name = '天王俱乐部'
         self.money = IntVar()
         self.money.set(0)
         self.player = []
+        self.cn = 0
+        self.cs = 0
+
+class Character:
+    def __init__(self, player):
+        self.money = 600
+        self.hpmax = 500
+        self.hp = 500
+        self.location = ''
+        self.location_target =''
+        self.speed = 1.1
+        self.damage = 40
+        self.through = 0
+        self.healps = 2
+        self.defence = 0 #a/(x+a)为有效伤害公式a=20时有：x=0，受100%伤害；x=20,受50%伤害
+        self.controltime = 1.2
+        self.controlcd = 20
+        self.name = player.name
+        self.site = player.site
+        self.d = player.damage
+        self.c = player.control
+        self.v = player.viability
+        self.f = player.farm
+        self.carry = player.carry
+        self.support = player.support
+        self.busy = 0
+    def cal(self):
+        self.damage= 30 + self.money * 0.01 * self.d * 0.01
+        self.healps= 3 + self.money * 0.002 * self.v * 0.01
+        self.hpmax = 500 +self.money * 0.07 * self.v * 0.01
+        self.defence = 8 + self.money *0.003 * self.v * 0.01
+        self.through = self.money *0.0007 * self.v * 0.01
+        self.controltime = 1.2 + self.money * 0.0003 * self.c * 0.01
+        self.controlcd = 20 - self.money * 0.0003 * self.c * 0.01
 
 
+class Game:
+    def __init__(self):
+        self.player_self = []
+        self.player_rival = []
+        self.cs = []
+        self.cv = []
+        self.top_player_s = []
+        self.mid_player_s = []
+        self.bot_player_s = []
+        self.top_player_v = []
+        self.mid_player_v = []
+        self.bot_player_v = []
+        self.top = ['t1','st2','st3','vt2','vt1']
+        self.mid = ['m1', 'sm2', 'sm3', 'vm2', 'vm1','bases','basev']
+        self.bot = ['b1', 'sb2', 'sb3', 'vb2', 'vb1']
+        
 
 class Market:
     def __init__(self):
@@ -36,10 +99,8 @@ class Market:
 
     def creat(self):
         for i in range(random.randint(5,15)):
-            self.player.append(Player())
-            self.player[i].num = i
-            self.player[i].name = random_name()
-            random_power(self.player[i])
+            self.player.append(Player(random_name()))
+            self.player[i].random_power
 
 #随即中文名
 def random_name():
@@ -53,7 +114,7 @@ def random_name():
     mid_names = ['的', '一', '是', '了', '我', '不', '人', '在', '他', '有', '这', '个', '上', '们', '来', '到', '时', '大', '地', '为',
                '子', '中', '你', '说', '生', '国', '年', '着', '就', '那', '和', '要', '她', '出', '也', '得', '里', '后', '自', '以',
                '乾', '坤', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']
-    first_names =['的', '一', '是', '了', '我', '不', '人', '在', '他', '有', '这', '个', '上', '们', '来', '到', '时', '大', '地', '为',
+    first_names = ['的', '一', '是', '了', '我', '不', '人', '在', '他', '有', '这', '个', '上', '们', '来', '到', '时', '大', '地', '为',
                '子', '中', '你', '说', '生', '国', '年', '着', '就', '那', '和', '要', '她', '出', '也', '得', '里', '后', '自', '以',
                '乾', '坤']
     r = random.randint(0,len(last_names)-1)
@@ -64,14 +125,14 @@ def random_name():
     name += first_names[r]
     return name
 
-def random_power(player):
-    player.damage = random.randint(0, 100)
-    player.control = random.randint(0, 100)
-    player.viability = random.randint(0, 100)
-    player.develop = random.randint(0, 100)
-    player.carry = random.randint(0, 100)
-    player.support = random.randint(0, 100)
-    player.fans = random.randint(100, 10000)
+# def random_power(player):
+#     player.damage = random.randint(20, 80)
+#     player.control = random.randint(20, 80)
+#     player.viability = random.randint(20, 80)
+#     player.develop = random.randint(20, 80)
+#     player.carry = random.randint(20, 80)
+#     player.support = random.randint(20, 80)
+#     player.fans = random.randint(100, 10000)
 
 
 
