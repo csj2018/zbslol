@@ -44,7 +44,8 @@ class Club:
         self.cs = 0
 
 class Character:
-    def __init__(self, player):
+    def __init__(self, player,num,sv_flag =0):
+        self.num = num
         self.money = 600
         self.hpmax = 500
         self.hp = 500
@@ -54,9 +55,9 @@ class Character:
         self.damage = 40
         self.through = 0
         self.healps = 2
-        self.defence = 0 #a/(x+a)为有效伤害公式a=20时有：x=0，受100%伤害；x=20,受50%伤害
+        self.defence = 0 #a/(x+a)为有效伤害公式a=10时有：x=0，受100%伤害；x=10,受50%伤害
         self.controltime = 1.2
-        self.controlcd = 20
+        self.controlcd = 0
         self.name = player.name
         self.site = player.site
         self.d = player.damage
@@ -66,6 +67,9 @@ class Character:
         self.carry = player.carry
         self.support = player.support
         self.busy = 0
+        self.sv_flag = sv_flag#
+        self.tmb_flag = 0
+        self.dead_flag = 0
     def cal(self):
         self.damage= 30 + self.money * 0.01 * self.d * 0.01
         self.healps= 3 + self.money * 0.002 * self.v * 0.01
@@ -76,22 +80,20 @@ class Character:
         self.controlcd = 20 - self.money * 0.0003 * self.c * 0.01
 
 
+
 class Game:
     def __init__(self):
-        self.player_self = []
-        self.player_rival = []
-        self.cs = []
-        self.cv = []
-        self.top_player_s = []
-        self.mid_player_s = []
-        self.bot_player_s = []
-        self.top_player_v = []
-        self.mid_player_v = []
-        self.bot_player_v = []
+        self.player = []
+        self.ch = []
         self.top = ['t1','st2','st3','vt2','vt1']
         self.mid = ['m1', 'sm2', 'sm3', 'vm2', 'vm1','bases','basev']
         self.bot = ['b1', 'sb2', 'sb3', 'vb2', 'vb1']
-        
+        self.ts = []
+        self.tv = []
+        self.ms = []
+        self.mv = []
+        self.bs = []
+        self.bv = []
 
 class Market:
     def __init__(self):
