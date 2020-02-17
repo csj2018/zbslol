@@ -41,6 +41,7 @@ class Club:
         self.money.set(0)
         self.player = []
         self.cs = 0 #界面选中的
+        self.cv = 0 #改名字
 
 class Character:
     def __init__(self, player,num,sv_flag =0):
@@ -67,7 +68,7 @@ class Character:
         self.support = player.support + player.state
         self.busy = 0
         self.sv_flag = sv_flag#
-        self.tmb_flag = 0
+        self.tmb_flag = 4 # 0，1，2top mid bot
         self.dead_flag = 0
     def cal(self):
         self.damage= 30 + self.money * 0.01 * self.d * 0.01
@@ -78,10 +79,17 @@ class Character:
         self.controltime = 1.2 + self.money * 0.0003 * self.c * 0.01
         self.controlcd = 20 - self.money * 0.0003 * self.c * 0.01
 
-
+class Tower:
+    def __init__(self,num):
+        self.hpmax = num * 2000 - 1000
+        self.hp = num * 2000 - 1000
+        self.damage = 30 * num + 10
+        self.defence = 5 + 2 * num
 
 class Game:
     def __init__(self):
+        self.towers = []
+        self.towerv = []
         self.player = []
         self.ch = []
         self.top = ['t1','st2','st3','vt2','vt1']
@@ -93,7 +101,19 @@ class Game:
         self.mv = []
         self.bs = []
         self.bv = []
+        self.sc = 0
 
+    def tower_creat(self):
+        for i in range(3):
+            self.towers.append([])
+            for j in range(3):
+                self.towers[i].append(Tower(j))
+        self.towers[1].append(Tower(4))
+        for i in range(3):
+            self.towerv.append([])
+            for j in range(3):
+                self.towerv[i].append(Tower(j))
+        self.towerv[1].append(Tower(4))
 class Market:
     def __init__(self):
         self.player = []
