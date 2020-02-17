@@ -40,8 +40,7 @@ class Club:
         self.money = IntVar()
         self.money.set(0)
         self.player = []
-        self.cn = 0
-        self.cs = 0
+        self.cs = 0 #界面选中的
 
 class Character:
     def __init__(self, player,num,sv_flag =0):
@@ -60,12 +59,12 @@ class Character:
         self.controlcd = 0
         self.name = player.name
         self.site = player.site
-        self.d = player.damage
-        self.c = player.control
-        self.v = player.viability
-        self.f = player.farm
-        self.carry = player.carry
-        self.support = player.support
+        self.d = player.damage + player.state
+        self.c = player.control + player.state
+        self.v = player.viability + player.state
+        self.f = player.farm + player.state
+        self.carry = player.carry + player.state
+        self.support = player.support + player.state
         self.busy = 0
         self.sv_flag = sv_flag#
         self.tmb_flag = 0
@@ -100,9 +99,9 @@ class Market:
         self.player = []
 
     def creat(self):
-        for i in range(random.randint(5,15)):
+        for i in range(random.randint(7,15)):
             self.player.append(Player(random_name()))
-            self.player[i].random_power
+            self.player[i].random_power()
 
 #随即中文名
 def random_name():
@@ -127,14 +126,6 @@ def random_name():
     name += first_names[r]
     return name
 
-# def random_power(player):
-#     player.damage = random.randint(20, 80)
-#     player.control = random.randint(20, 80)
-#     player.viability = random.randint(20, 80)
-#     player.develop = random.randint(20, 80)
-#     player.carry = random.randint(20, 80)
-#     player.support = random.randint(20, 80)
-#     player.fans = random.randint(100, 10000)
 
 
 

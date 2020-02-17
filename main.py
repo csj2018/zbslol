@@ -173,7 +173,7 @@ rbc5 =Radiobutton(frame_club, text = '5号位', variable = varc3, value = 5)
 
 varc4 = StringVar()
 varc4.set('改位置')
-def change_set():
+def change_site():
     if lbc1.curselection() != ():
         if varc4.get() == '改位置':
             rbc1.grid(row=11, column=3)
@@ -188,7 +188,6 @@ def change_set():
             varc4.set('确定')
             lbc1['state'] = 'disabled'
         else:
-
             for i in range(len(club.player)):
                 if club.player[i].site == varc3.get():
                     club.player[i].site = 0
@@ -204,7 +203,7 @@ def change_set():
             rbc5.grid_forget()
             refresh_win(frame_club)
 
-bc3 = Button(frame_club, textvariable = varc4, command = change_set)
+bc3 = Button(frame_club, textvariable = varc4, command = change_site)
 
 #改名字
 varc2 = StringVar()
@@ -513,27 +512,45 @@ gt =[0, 0, 0]#时间
 varg3 = StringVar()
 varg3.set('游戏时间：'+str(gt[0])+'分钟'+str(gt[1])+'.'+str(gt[2])+'秒')
 lg2 = Label(frame_game,textvariable =varg3).grid(row =0,column =2,columnspan = 6)
+
+
+####测试用代码
+# club.player.append(Player('1号工具人'))
+# club.player.append(Player('2号工具人'))
+# club.player.append(Player('3号工具人'))
+# club.player.append(Player('4号工具人'))
+# club.player.append(Player('5号工具人'))
+# for i in range(5):
+#     club.player[i].site =1+i
+#     club.player[i].random_power()
+
+def save():
+    data = []
+    data.append(club.player)
+    f = open('save.pckl', 'wb')
+    pickle.dump(data, f)
+    f.close()
+
+def load():
+    f = open('save.pckl', 'rb')
+    data = pickle.load(f)
+    f.close()
+    club.player.clear()
+    club.player +=data[0]
+    print(club.player[0].name)
 #menubar
 menubar = Menu(win)
 #　定义一个空的菜单单元
 filemenu = Menu(menubar, tearoff=0)  # tearoff意为下拉
 menubar.add_cascade(label='开始', menu=filemenu)
-filemenu.add_command(label='保存')
-filemenu.add_command(label='载入')
+filemenu.add_command(label='保存',command = save)
+filemenu.add_command(label='载入',command = load)
 # 分隔线
 filemenu.add_separator()
 filemenu.add_command(label='退出', command = win.quit)
 win.config(menu =menubar)
 
-####测试用代码
-club.player.append(Player('1号工具人'))
-club.player.append(Player('2号工具人'))
-club.player.append(Player('3号工具人'))
-club.player.append(Player('4号工具人'))
-club.player.append(Player('5号工具人'))
-for i in range(5):
-    club.player[i].site =1+i
-    club.player[i].random_power()
+
 
 win.mainloop()
 
