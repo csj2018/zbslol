@@ -51,7 +51,7 @@ class Character:
         self.hp = 500
         self.location = ''
         self.location_target =''
-        self.speed = 1.1
+        self.speed = 1.2
         self.damage = 40
         self.through = 0
         self.healps = 2
@@ -70,21 +70,22 @@ class Character:
         self.sv_flag = sv_flag#
         self.tmb_flag = 4 # 0，1，2top mid bot
         self.dead_flag = 0
+        self.kda = [0,0,0]
     def cal(self):
-        self.damage= 30 + self.money * 0.01 * self.d * 0.01
-        self.healps= 3 + self.money * 0.002 * self.v * 0.01
+        self.damage= 40 + self.money * 0.012 * self.d * 0.01
+        self.healps= 3 + self.money * 0.0007 * self.v * 0.01
         self.hpmax = 500 +self.money * 0.07 * self.v * 0.01
-        self.defence = 8 + self.money *0.003 * self.v * 0.01
+        self.defence = 5 + self.money *0.0015 * self.v * 0.01
         self.through = self.money *0.0007 * self.v * 0.01
         self.controltime = 1.2 + self.money * 0.0003 * self.c * 0.01
         self.controlcd = 20 - self.money * 0.0003 * self.c * 0.01
 
 class Tower:
     def __init__(self,num):
-        self.hpmax = num * 2000 - 1000
-        self.hp = num * 2000 - 1000
-        self.damage = 30 * num + 10
-        self.defence = 5 + 2 * num
+        self.hpmax = num * 3000 + 3000
+        self.hp = num * 3000 + 3000
+        self.damage = 30 * num + 90
+        self.defence = 9 + 3 * num
 
 class Game:
     def __init__(self):
@@ -95,25 +96,23 @@ class Game:
         self.top = ['t1','st2','st3','vt2','vt1']
         self.mid = ['m1', 'sm2', 'sm3', 'vm2', 'vm1','bases','basev']
         self.bot = ['b1', 'sb2', 'sb3', 'vb2', 'vb1']
-        self.ts = []
-        self.tv = []
-        self.ms = []
-        self.mv = []
-        self.bs = []
-        self.bv = []
-        self.sc = 0
-
+        self.ps = [[],[],[],[],[],[]] #角色分路容器
+        self.sc = 0 #选择的角色,查看属性用的
+        self.tmb_avi_s =[0,1,2]#可选择去的路
+        self.tmb_avi_v = [0,1,2]
+        self.spring = []
+        self.gt = [0,0,0]
     def tower_creat(self):
         for i in range(3):
             self.towers.append([])
             for j in range(3):
                 self.towers[i].append(Tower(j))
-        self.towers[1].append(Tower(4))
+        # self.towers[1].append(Tower(4))
         for i in range(3):
             self.towerv.append([])
             for j in range(3):
                 self.towerv[i].append(Tower(j))
-        self.towerv[1].append(Tower(4))
+        # self.towerv[1].append(Tower(4))
 class Market:
     def __init__(self):
         self.player = []
@@ -145,7 +144,31 @@ def random_name():
     r = random.randint(0,len(first_names)-1)
     name += first_names[r]
     return name
+class Hpbar:
+    def __init__(self,master,height =18,width =100,hpmax =100,hp =100, bg='pink',fg ='green'):
+        self.master =master
+        self.height =height
+        self.width = width
+        self.hpmax = hpmax
+        self.hp = hp
+        self.bg = bg
+        self.fg = fg
+        self.canvas = Canvas(master, width=self.width, height = self.height, bg=self.bg)
+        length = self.width*hp/hpmax
+        self.line = self.canvas.create_rectangle(0,0,length+1,self.height+1, fill=self.fg)
+        self.lt = self.canvas.create_text(self.width/2,self.height/2,text = str(int(self.hp))+'/'+str(int(self.hpmax)))
 
+    def grid(self,row =0,column = 0,rowspan =1,columnspan =1):
+        self.canvas.grid(row=row, column=column, rowspan=rowspan, columnspan=columnspan)
+    def grid_forget(self):
+        self.canvas.grid_forget()
+    def refresh(self,hp,hpmax):
+        self.hp =hp
+        self.hpmax =hpmax
+        length = self.width*hp/hpmax
+        self.canvas.coords(self.line,(0,0,length+1,self.height+1))
+        self.canvas.delete(self.lt)
+        self.lt = self.canvas.create_text(self.width/2,self.height/2,text = str(int(self.hp))+'/'+str(int(self.hpmax)))
 
 
 

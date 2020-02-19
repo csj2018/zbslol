@@ -3,13 +3,13 @@ from support import *
 from tkinter import ttk
 import time
 import pickle
-#开头
+# <editor-fold desc="开头">
 win =Tk()
-win.geometry('600x600')
+win.geometry('600x800')
 win.title('这不是LOL')
 club = Club()#初始化俱乐部
 state = State()
-game = Game()
+# game = Game()
 market = Market()
 market.creat()
 #初始化各个界面
@@ -22,6 +22,7 @@ frame_game =Frame(win)
 frame = [frame_root, frame_mkt, frame_club, frame_game]
 lr1 = Label(frame_root, text = "资金：").grid(row = 0, column = 0)
 lr2 = Label(frame_root, textvariable = club.money).grid(row = 0, column = 1)
+# </editor-fold>
 #战队赞助
 def donate():
     club.money.set(club.money.get()+50000)
@@ -83,7 +84,7 @@ lbm.bind('<ButtonRelease-1>', checkm)#事件触发
 lbm.bind('<KeyRelease-Up>', checkm)
 lbm.bind('<KeyRelease-Down>', checkm)
 
-#市场界面
+# <editor-fold desc="市场界面">
 bm1 = Button(frame_mkt, text = '返回', command = lambda :change_win(frame_root))
 bm1.grid(row =0, column =0)
 lm2 = []
@@ -112,6 +113,7 @@ def buy_player():
 
 bm2 = Button(frame_mkt, text = '购买选手', command = buy_player)
 bm2.grid(row = 0, column = 1)
+# </editor-fold>
 
 #俱乐部部分
 
@@ -186,7 +188,7 @@ def change_site():
             rbc5.grid(row=11, column=7)
             value = lbc1.get(lbc1.curselection())
             for i in range(len(club.player)):
-                if club.player[i].name == value:
+                if club.player[i].name in value:
                     club.cs = i
             varc4.set('确定')
             lbc1['state'] = 'disabled'
@@ -216,7 +218,7 @@ def change_name():
         if lbc1.curselection() != ():
             value = lbc1.get(lbc1.curselection())
             for i in range(len(club.player)):
-                if club.player[i].name == value:
+                if club.player[i].name in value:
                     club.cv = i
             lbc1['state'] = 'disabled'
             ec1[0]['state'] = 'normal'
@@ -229,7 +231,19 @@ def change_name():
         refresh_win(frame_club)
 
 bc2 = Button(frame_club, textvariable = varc2, command = change_name)#改名按钮
+#开除选手
+# varc3 = StringVar()
+# varc3.set('开除选手')
+def fire():
+    if lbc1.curselection() != ():
+        value = lbc1.get(lbc1.curselection())
+        for i in range(len(club.player)):
+            if club.player[i].name in value:
+                club.player.pop(i)
+                refresh_win(frame_club)
 
+bc4 = Button(frame_club, text = '开除选手', command = fire)
+bc4.grid()
 #俱乐部事件
 lbc1.bind('<ButtonRelease-1>', checkc)
 lbc1.bind('<KeyRelease-Up>', checkc)
@@ -241,33 +255,92 @@ bg1.grid()
 varg1 = StringVar()
 varg1.set('准备')
 #关键部分准备游戏
-def refreshbb():
+def recoverbb():#修复加速导致的错位
     for i in range(10):
-        hpb[i]['maximum'] =game.ch[i].hpmax
-        hpb[i]['value'] = game.ch[i].hp
-def refreshgame():
+        bgc[i].grid_forget()
+        hpb[i].grid_forget()
+    for i in range(10):
+        j =game.ch[i].tmb_flag
+        if game.ch[i].dead_flag ==0:
+            if i <5:
+                bgc[i].grid(row=11 - game.ps[j].index(i) * 2, column=3 + 2 * j)
+                hpb[i].grid(row=10 - game.ps[j].index(i) * 2, column=3 + 2 * j)
+            else:
+                bgc[i].grid(row=15 + game.ps[j+3].index(i) * 2, column=3 + 2 * j)
+                hpb[i].grid(row=14 + game.ps[j+3].index(i) * 2, column=3 + 2 * j)
+        else:
+            bgc[i].grid(row=15 + game.spring.index(i)*2, column =8)
+            hpb[i].grid(row=14 + game.spring.index(i)*2, column =8)
+def refreshbb():#界面刷新
+    for i in range(10):
+        hpb[i].refresh(game.ch[i].hp,game.ch[i].hpmax)
+    varg3.set('游戏时间：' + str(game.gt[0]) + '分钟' + str(game.gt[1]) + '.' + str(game.gt[2]) + '秒')
+    ch=game.ch[game.sc]
+    varg4[0].set(ch.name)
+    varg4[1].set(str(ch.kda[0])+'/'+str(ch.kda[1])+'/'+str(ch.kda[2]))#kda
+    varg4[2].set(ch.money)
+    varg4[3].set(ch.damage)
+    varg4[4].set(ch.through)
+    varg4[5].set(ch.defence)
+    varg4[6].set(ch.healps)
+def judgement(ch):
+    ch.hp += ch.healps * 0.1
+    if ch.hp > ch.hpmax:
+        ch.hp = ch.hpmax
+    ch.busy -= 0.1
+    if ch.controlcd != 0:
+        ch.controlcd -= 0.1
+    if ch.busy <= 0 and ch.dead_flag == 0:
+        b = ch.d + ch.c + ch.v + ch.f
+        r = random.randint(1, b)
+        if r >= 1 and r < ch.d:
+            damage_behave(ch)
+        elif r >= ch.d and r < ch.d + ch.c:
+            control_behave(ch)
+        elif r >= ch.d + ch.c and r < ch.d + ch.c + ch.v:
+            viability_behave(ch)
+        elif r >= ch.d + ch.c + ch.v and r <= b:
+            farm_behave(ch)
+    elif ch.busy <= 0 and ch.dead_flag == 1:
+        back(ch)
+def refreshgame_time(n=100):
     if varg1.get() == '暂停游戏':
         game_time_refresh()
         for i in range(10):
             judgement(game.ch[i])
         refreshbb()
-        win.after(100, refreshgame)
+        win.after(n, lambda :refreshgame_time(n))
+def refreshgame():#后台的，用来push
+    game_time_refresh()
+    for i in range(10):
+        judgement(game.ch[i])
 def play():
     print(varg1.get())
     if varg1.get() == '准备':
         print('准备执行checkgame')
         checkgame()
     elif varg1.get() == '游戏初始化':
-        varg1.set('开始游戏')
+        varg1.set('进行游戏')
         game_init()
-    elif varg1.get() == '开始游戏':
+    elif varg1.get() == '进行游戏':
         varg1.set('暂停游戏')
-        refreshgame()
+        refreshgame_time()
     elif varg1.get() == '暂停游戏':
-        varg1.set('开始游戏')
+        varg1.set('进行游戏')
+def end_game():
+    varg1.set('准备')
+    bg2['state']='normal'
+    bg3['state']='disabled'
+    bg4['state']='disabled'
+    for i in range(10):
+        bgc[i].grid_forget()
+        hpb[i].grid_forget()
+    for i in range(3):
+        thpb[i].grid_forget()
+        lg1[i].grid_forget()
 def checkgame():
-    game.player.clear()#清理部分
-    print('清理完毕')
+    global game
+    game = Game()
     for i in range(len(club.player)):#判定是否能开始
         if club.player[i].site == 1:
             game.player.append(club.player[i])
@@ -295,16 +368,29 @@ def checkgame():
             game.ch[i].sv_flag = 1#对手标示
         varg1.set('游戏初始化')
 def game_init():#功能是把角色对应的按钮放在相应的位置
+    bg4['state'] = 'normal'
+    bg3['state'] = 'normal'
     #角色属性初始化
     for i in range(10):
         game.ch[i].cal()
+        bgc[i]['bg']='white'
     #塔初始化
     game.tower_creat()
     #分路按钮和血条初始化放置
+    # for i in range(5):#预留位置
+    #     bgc[i].grid(row=11 - i * 2, column=3)
+    #     hpb[i].grid(row=10 - i * 2, column=3)
+    #     bgc[i+5].grid(row=16 + i * 2, column=3)
+    #     hpb[i+5].grid(row=15 + i * 2, column=3)
+    #     time.sleep(1)
+    #     bgc[i].grid_forget()
+    #     hpb[i].grid_forget()
+    #     bgc[i + 5].grid_forget()
+    #     hpb[i + 5].grid_forget()
     for i in range(10):
         bgc[i]['text'] = game.ch[i].name + '（' + str(game.ch[i].site) + '号位）'
-        hpb[i]['maximum'] =game.ch[i].hpmax
-        hpb[i]['value'] = game.ch[i].hp
+        hpb[i].hpmax=game.ch[i].hpmax
+        hpb[i].hp = game.ch[i].hp
     for i in [0,5]:
         r =random.randint(0,1)
         if r ==0:
@@ -317,280 +403,161 @@ def game_init():#功能是把角色对应的按钮放在相应的位置
             game.ch[i + 2].tmb_flag = 2
         game.ch[i + 1].tmb_flag = 1
         game.ch[i + 3].tmb_flag = random.randint(0,2)
-    for i in range(5):
-        if game.ch[i].tmb_flag == 0:
-            game.ts.append(i)
-            bgc[i].grid(row=11 - len(game.ts) * 2, column =3)
-            hpb[i].grid(row=10 - len(game.ts) * 2, column =3)
-        elif game.ch[i].tmb_flag ==1:
-            game.ms.append(i)
-            bgc[i].grid(row=11 - len(game.ms) * 2, column =5)
-            hpb[i].grid(row=10 - len(game.ms) * 2, column =5)
-        elif game.ch[i].tmb_flag ==2:
-            game.bs.append(i)
-            bgc[i].grid(row=11 - len(game.bs) * 2, column=7)
-            hpb[i].grid(row=10 - len(game.bs) * 2, column=7)
-    for i in range(5,10):
-        if game.ch[i].tmb_flag == 0:
-            game.tv.append(i)
-            bgc[i].grid(row=16 + len(game.tv) * 2, column=3)
-            hpb[i].grid(row=15 + len(game.tv) * 2, column=3)
-        elif game.ch[i].tmb_flag == 1:
-            game.mv.append(i)
-            bgc[i].grid(row=16 + len(game.mv) * 2, column=5)
-            hpb[i].grid(row=15 + len(game.mv) * 2, column=5)
-        elif game.ch[i].tmb_flag == 2:
-            game.bv.append(i)
-            bgc[i].grid(row=16 + len(game.bv) * 2, column=7)
-            hpb[i].grid(row=15 + len(game.bv) * 2, column=7)
+    for i in range(10):
+        j =game.ch[i].tmb_flag
+        if i <5:
+            game.ps[j].append(i)
+            bgc[i].grid(row=11 - game.ps[j].index(i) * 2, column=3 + 2 * j)
+            hpb[i].grid(row=10 - game.ps[j].index(i) * 2, column=3 + 2 * j)
+        else:
+            game.ps[j+3].append(i)
+            bgc[i].grid(row=15 + game.ps[j+3].index(i) * 2, column=3 + 2 * j)
+            hpb[i].grid(row=14 + game.ps[j+3].index(i) * 2, column=3 + 2 * j)
     for i in range(5):
         bgc[i]['fg'] = 'blue'
         bgc[i + 5]['fg'] = 'red'
     #中线初始化放置
-    for i in range(3):#中线标签的初始化
+    varg2[0].set('上路河道')
+    varg2[1].set('中路河道')
+    varg2[2].set('下路河道')
+    for i in range(3):#中线标签和塔血条的初始化
         lg1[i].grid(row=13, column=3 + 2 * i)
+        thpb[i].grid(row=12, column=3 + 2 * i)
 def game_time_refresh():
-    if gt[2] == 9:
-        gt[2] =0
-        gt[1]+=1
+    if game.gt[2] == 9:
+        game.gt[2] =0
+        game.gt[1]+=1
     else:
-        gt[2] +=1
-    if gt[1] == 60:
-        gt[1] =0
-        gt[0] +=1
-    varg3.set('游戏时间：'+str(gt[0])+'分钟'+str(gt[1])+'.'+str(gt[2])+'秒')
-    varg4[0].set(game.ch[game.sc].name)
-    varg4[1].set(game.ch[game.sc].hp)
-    varg4[2].set(game.ch[game.sc].money)
-    varg4[3].set(game.ch[game.sc].damage)
-    varg4[4].set(game.ch[game.sc].through)
-    varg4[5].set(game.ch[game.sc].defence)
-    varg4[6].set(game.ch[game.sc].healps)
-def judgement(ch):
-    ch.hp+=ch.healps*0.1
-    if ch.hp>ch.hpmax:
-        ch.hp =ch.hpmax
-    ch.busy -=0.1
-    if ch.controlcd!=0:
-        ch.controlcd-=0.1
-    if ch.busy <= 0 and ch.dead_flag == 0:
-        b=ch.d+ch.c+ch.v+ch.f
-        r =random.randint(1,b)
-        if r>=1 and r<ch.d:
-            damage_behave(ch)
-        elif r>=ch.d and r<ch.d+ch.c:
-            control_behave(ch)
-        elif r >= ch.d+ch.c and r < ch.d+ch.c+ch.v:
-            viability_behave(ch)
-        elif r >= ch.d+ch.c+ch.v and r <= b:
-            farm_behave(ch)
-    elif ch.busy <=0 and ch.dead_flag == 1:
-        ch.dead_flag = 0
-        bgc[ch.num]['bg'] = 'white'
-        back(ch)
+        game.gt[2] +=1
+    if game.gt[1] == 60:
+        game.gt[1] =0
+        game.gt[0] +=1
 def back(ch):
-    if ch.tmb_flag == 0 and ch.sv_flag == 0:
-        game.ts.append(ch.num)
-    elif ch.tmb_flag == 0 and ch.sv_flag == 1:
-        game.tv.append(ch.num)
-    elif ch.tmb_flag == 1 and ch.sv_flag == 0:
-        game.ms.append(ch.num)
-    elif ch.tmb_flag == 1 and ch.sv_flag == 1:
-        game.mv.append(ch.num)
-    elif ch.tmb_flag == 2 and ch.sv_flag == 0:
-        game.bs.append(ch.num)
-    elif ch.tmb_flag == 2 and ch.sv_flag == 1:
-        game.bv.append(ch.num)
+    ch.dead_flag = 0
+    bgc[ch.num]['bg'] = 'white'
+    game.spring.pop(game.spring.index(ch.num))
+    if ch.num < 5:
+        game.ps[ch.tmb_flag].append(ch.num)
+    else:
+        game.ps[ch.tmb_flag + 3].append(ch.num)
+    recoverbb()
 def escape(ch):
-    if ch.tmb_flag == 0 and ch.sv_flag == 0:
-        a = game.ts.index(ch.num)
-        game.ts.pop(a)
-    elif ch.tmb_flag == 0 and ch.sv_flag == 1:
-        a = game.tv.index(ch.num)
-        game.tv.pop(a)
-    elif ch.tmb_flag == 1 and ch.sv_flag == 0:
-        a = game.ms.index(ch.num)
-        game.ms.pop(a)
-    elif ch.tmb_flag == 1 and ch.sv_flag == 1:
-        a = game.mv.index(ch.num)
-        game.mv.pop(a)
-    elif ch.tmb_flag == 2 and ch.sv_flag == 0:
-        a = game.bs.index(ch.num)
-        game.bs.pop(a)
-    elif ch.tmb_flag == 2 and ch.sv_flag == 1:
-        a = game.bv.index(ch.num)
-        game.bv.pop(a)
+    if ch.num <5:
+        game.ps[ch.tmb_flag].pop(game.ps[ch.tmb_flag].index(ch.num))
+    else:
+        game.ps[ch.tmb_flag+3].pop(game.ps[ch.tmb_flag+3].index(ch.num))
     ch.dead_flag =1
-    bgc[ch.num]['bg'] ='black'
+    bgc[ch.num]['bg'] ='grey'
+    bgc[ch.num].grid_forget()
+    hpb[ch.num].grid_forget()
+    game.spring.append(ch.num)
+    bgc[ch.num].grid(row =15+game.spring.index(ch.num)*2, column =8)
+    hpb[ch.num].grid(row =14+game.spring.index(ch.num)*2, column =8)
     ch.busy += 20
     ch.hp +=ch.hpmax
 def search_target(ch):
-    target ='初始'
-    if ch.tmb_flag == 0 and ch.sv_flag == 0:
-        if len(game.tv) !=0:
-            r = random.randint(0, len(game.tv) - 1)
-            target = game.tv[r]
-        else:
-            farm_behave(ch)
-            target = 'toptower'
-    elif ch.tmb_flag == 1 and ch.sv_flag ==0:
-        if len(game.mv) != 0:
-            r = random.randint(0, len(game.mv) - 1)
-            target = game.mv[r]
-        else:
-            farm_behave(ch)
-            target = 'midtower'
-    elif ch.tmb_flag == 2 and ch.sv_flag ==0:
-        if len(game.bv) != 0:
-            r = random.randint(0, len(game.bv) - 1)
-            target = game.bv[r]
-        else:
-            farm_behave(ch)
-            target = 'bottower'
-    elif ch.tmb_flag == 0 and ch.sv_flag ==1:
-        if len(game.ts) != 0:
-            r = random.randint(0, len(game.ts) - 1)
-            target = game.ts[r]
-        else:
-            farm_behave(ch)
-            target = 'toptower'
-    elif ch.tmb_flag == 1 and ch.sv_flag ==1:
-        if len(game.ms) != 0:
-            r = random.randint(0, len(game.ms) - 1)
-            target = game.ms[r]
-        else:
-            farm_behave(ch)
-            target = 'midtower'
-    elif ch.tmb_flag == 2 and ch.sv_flag ==1:
-        if len(game.bs) != 0:
-            r = random.randint(0, len(game.bs) - 1)
-            target = game.bs[r]
-        else:
-            farm_behave(ch)
-            target = 'bottower'
+    target = 10
+    if ch.num<5 and game.ps[ch.tmb_flag+3] !=[]:
+        r = random.randint(0, len(game.ps[ch.tmb_flag+3]) - 1)
+        target = game.ps[ch.tmb_flag+3][r]
+    elif ch.num>=5 and game.ps[ch.tmb_flag] !=[]:
+        r = random.randint(0, len(game.ps[ch.tmb_flag]) - 1)
+        target = game.ps[ch.tmb_flag][r]
     return target# 返回的是编号
-def tower_set(ch):
+def tower_set(ch):#
     a=''
+    b=['上路','中路','下路']
     if ch.num<5:
-        a+='我方'
-        if ch.tmb_flag == 0:
-            a += '上路'
-            a +=str(4 - len(game.towerv[0])) + '塔'
-            varg2[0].set(a)
-        elif ch.tmb_flag == 1:
-            a += '中路'
-            a += str(5 - len(game.towerv[1])) + '塔'
-            varg2[1].set(a)
-        else:
-            a += '下路'
-            a += str(4 - len(game.towerv[2])) + '塔'
-            varg2[2].set(a)
+        a+='红色方'
     else:
-        a+='对方'
-        if ch.tmb_flag == 0:
-            a += '上路'
-            a += str(4 - len(game.towers[0])) + '塔'
-            varg2[0].set(a)
-        elif ch.tmb_flag == 1:
-            a += '中路'
-            a += str(5 - len(game.towers[1])) + '塔'
-            varg2[1].set(a)
-        else:
-            a += '下路'
-            a += str(4 - len(game.towers[2])) + '塔'
-            varg2[2].set(a)
+        a+='蓝色方'
+    for i in range(3):
+        if ch.tmb_flag == i:
+            a+=b[i]
+    if ch.num<5 and len(game.towerv[ch.tmb_flag])!= 0:
+        a+= str(4-len(game.towerv[ch.tmb_flag]))+'塔'
+    elif ch.num>=5 and len(game.towers[ch.tmb_flag])!= 0:
+        a += str(4 - len(game.towers[ch.tmb_flag])) + '塔'
+    elif ch.num<5 and len(game.towerv[ch.tmb_flag])== 0:
+        a ='红色方基地'
+    elif ch.num>=5 and len(game.towers[ch.tmb_flag]) == 0:
+        a ='蓝色方基地'
+    for i in range(3):
+        if ch.tmb_flag == i:
+            varg2[i].set(a)
 def hit_tower(ch):
     tower_set(ch)
     a = ch.tmb_flag
     ch.busy +=ch.speed
-    if ch.num <5:
+    if game.towerv[a] ==[] and ch.num<5:
+        if game.tmb_avi_s !=[]:
+            if a in game.tmb_avi_s:
+                game.tmb_avi_s.pop(game.tmb_avi_s.index(a))
+            move(ch.num,game.tmb_avi_s[random.randint(0,len(game.tmb_avi_s)-1)])
+        else:
+            final(0)
+    elif game.towers[a]==[] and ch.num>=5:
+        if game.tmb_avi_v != []:
+            if a in game.tmb_avi_v:
+                game.tmb_avi_v.pop(game.tmb_avi_v.index(a))
+            move(ch.num, game.tmb_avi_v[random.randint(0, len(game.tmb_avi_v) - 1)])
+        else:
+            final(1)
+    elif ch.num <5:
         ch.hp -= game.towerv[a][0].damage * 10/(10 + ch.defence)
-        game.towerv[a][0].hp -= ch.damage * 10/(10 + game.towerv[a][0].defence - ch.through)
-        thpb[a]['maximun']=game.towerv[a][0].hpmax
-        thpb[a]['value'] = game.towerv[a][0].hp
+        game.towerv[a][0].hp -= ch.damage * 10/(10 + game.towerv[a][0].defence - ch.through/2)
+        thpb[a].refresh(game.towerv[a][0].hp,game.towerv[a][0].hpmax)
         if game.towerv[a][0].hp <=0:
             game.towerv[a].pop(0)
-        if a == 0 and len(game.towerv[a]) == []:
-            for i in game.ts:
-                move(i,1)
-            for i in game.tv:
-                move(i,1)
-        elif a == 2 and len(game.towerv[a]) == []:
-            for i in game.bs:
-                move(i,1)
-            for i in game.bv:
-                move(i,1)
     else:
         ch.hp -= game.towers[a][0].damage * 10/(10 + ch.defence)
-        game.towers[a][0].hp -= ch.damage * 10/(10 + game.towers[a][0].defence - ch.through)
-        thpb[a]['maximun'] = game.towers[a][0].hpmax
-        thpb[a]['value'] = game.towers[a][0].hp
+        game.towers[a][0].hp -= ch.damage * 10/(10 + game.towers[a][0].defence - ch.through/2)
+        thpb[a].refresh(game.towers[a][0].hp, game.towers[a][0].hpmax)
         if game.towers[a][0].hp <=0:
             game.towers[a].pop(0)
-        if a == 0 and len(game.towers[a]) == []:
-            for i in game.ts:
-                move(i,1)
-            for i in game.tv:
-                move(i,1)
-        elif a == 2 and len(game.towers[a]) == []:
-            for i in game.bs:
-                move(i,1)
-            for i in game.bv:
-                move(i,1)
-    if len(game.towers[a]) == [] or len(game.towerv[a]) == []:
-        varg1.set('结束了！')
+def final(a):
+    print(a)
+    varg1.set('开始结算')
 def move(num, tmb):#num号玩家移动到tmb位置
+    print(str(num)+'号'+game.ch[num].name+'移动到'+str(tmb))
     a = game.ch[num].tmb_flag
     bgc[num].grid_forget()
     hpb[num].grid_forget()
     if num <5:
-        if a == 0:
-            game.ts.pop(num)
-        elif a ==1:
-            game.ms.pop(num)
-        else:
-            game.bs.pop(num)
-        if tmb ==0:
-            game.ts.append(num)
-            bgc[i].grid(row=11 - len(game.ts) * 2, column=3)
-            hpb[i].grid(row=10 - len(game.ts) * 2, column=3)
-        elif tmb==1:
-            game.ms.append(num)
-            bgc[i].grid(row=11 - len(game.ms) * 2, column=5)
-            hpb[i].grid(row=10 - len(game.ms) * 2, column=5)
-        else:
-            game.bs.append(num)
-            bgc[i].grid(row=11 - len(game.bs) * 2, column=7)
-            hpb[i].grid(row=10 - len(game.bs) * 2, column=7)
+        print('蓝色方移动')
+        game.ps[a].pop(game.ps[a].index(num))
+        game.ps[tmb].append(num)
+        bgc[num].grid(row=11 - game.ps[tmb].index(num) * 2, column=3 + 2 * tmb)
+        hpb[num].grid(row=10 - game.ps[tmb].index(num) * 2, column=3 + 2 * tmb)
     else:
-        if a == 0:
-            game.tv.pop(num)
-        elif a ==1:
-            game.mv.pop(num)
-        else:
-            game.bv.pop(num)
-        if tmb ==0:
-            game.tv.append(num)
-            bgc[i].grid(row=16 + len(game.tv) * 2, column=3)
-            hpb[i].grid(row=15 + len(game.tv) * 2, column=3)
-        elif tmb==1:
-            game.mv.append(num)
-            bgc[i].grid(row=16 + len(game.mv) * 2, column=5)
-            hpb[i].grid(row=15 + len(game.mv) * 2, column=5)
-        else:
-            game.bv.append(num)
-            bgc[i].grid(row=16 + len(game.bv) * 2, column=7)
-            hpb[i].grid(row=15 + len(game.bv) * 2, column=7)
+        print('红色方移动')
+        game.ps[a+3].pop(game.ps[a+3].index(num))
+        game.ps[tmb+3].append(num)
+        bgc[num].grid(row=15 + game.ps[tmb+3].index(num) * 2, column=3 + 2 * tmb)
+        hpb[num].grid(row=14 + game.ps[tmb+3].index(num) * 2, column=3 + 2 * tmb)
     game.ch[num].busy +=3
+    game.ch[num].tmb_flag = tmb
 def damage_behave(ch):
-    if type(search_target(ch)) == int:
+    if search_target(ch) <10:
         target = game.ch[search_target(ch)]
         target.hp -= ch.damage*10/(10+target.defence-ch.through)
         ch.busy += ch.speed
         if target.hp <= 0:
+            ch.kda[0]+=1
+            target.kda[1]+=1
+            ch.kda[2]-=1
+            if ch.num<5:
+                for i in range(len(game.ps[ch.tmb_flag])):
+                    n = game.ps[ch.tmb_flag][i]
+                    game.ch[n].kda[2]+=1
+            else:
+                for i in range(len(game.ps[ch.tmb_flag+3])):
+                    n = game.ps[ch.tmb_flag+3][i]
+                    game.ch[n].kda[2]+=1
+            print()
             escape(target)
             target.busy += 10
-            ch.money += 100+target.money/10
+            ch.money += 200
     else:
         hit_tower(ch)
 def control_behave(ch):
@@ -611,16 +578,17 @@ def viability_behave(ch):
         ch.hp += ch.healps*7
         ch.busy += 1
 def farm_behave(ch):
-    ch.money += ch.f*1.5
+    ch.money += ch.f
     ch.busy += ch.speed
     ch.cal()
+#开启游戏按钮
 bg2 = Button(frame_game, textvariable = varg1, command = play)
 bg2.grid(row =0, column =1)
 bgc = []#角色按钮
 hpb = []#血条
 thpb = []
 for i in range(3):
-    thpb.append(ttk.Progressbar(frame_game).grid(row=13, column=4+2*i))
+    thpb.append(Hpbar(frame_game,fg ='yellow'))
 #罗嗦的一段
 def checkch0():
     game.sc =0
@@ -653,7 +621,7 @@ bgc.append(Button(frame_game,bg='white',command =checkch7))
 bgc.append(Button(frame_game,bg='white',command =checkch8))
 bgc.append(Button(frame_game,bg='white',command =checkch9))
 for i in range(10):
-    hpb.append(ttk.Progressbar(frame_game))
+    hpb.append(Hpbar(frame_game))
 
 
 lg1 =[]
@@ -661,29 +629,35 @@ varg2 = []#中线label
 for i in range(3):
     varg2.append(StringVar())
     lg1.append(Label(frame_game, textvariable=varg2[i]))
-varg2[0].set('上路一塔')
-varg2[1].set('中路一塔')
-varg2[2].set('下路一塔')
-gt =[0, 0, 0]#时间
 varg3 = StringVar()
-varg3.set('游戏时间：'+str(gt[0])+'分钟'+str(gt[1])+'.'+str(gt[2])+'秒')
-lg2 = Label(frame_game,textvariable =varg3).grid(row =0,column =2,columnspan = 6)
-
-lg3 = []#25起
+lg2 = Label(frame_game,textvariable =varg3).grid(row =1,column =2,columnspan = 6)
+lg3 = []#状态栏label
 eg1 = []
 varg4 =[]
 for i in range(7):
     varg4.append(StringVar())
     eg1.append(Entry(frame_game, textvariable=varg4[i], state ='disabled').grid(row =25+i,column =3,columnspan =4))
 lg3.append(Label(frame_game,text = '姓名').grid(row =25, column = 2))
-lg3.append(Label(frame_game,text = '生命').grid(row =26, column = 2))
+lg3.append(Label(frame_game,text = 'KDA').grid(row =26, column = 2))
 lg3.append(Label(frame_game,text = '经济').grid(row =27, column = 2))
 lg3.append(Label(frame_game,text = '伤害').grid(row =28, column = 2))
 lg3.append(Label(frame_game,text = '穿透').grid(row =29, column = 2))
 lg3.append(Label(frame_game,text = '防御').grid(row =30, column = 2))
 lg3.append(Label(frame_game,text = '恢复').grid(row =31, column = 2))
-
-
+def pushmin():
+    for i in range(600):
+        if varg1.get() == '开始结算':
+            break
+        else:
+            refreshgame()
+    recoverbb()
+    refreshbb()
+#加速
+bg3 =Button(frame_game,text ='推进1分钟', state= 'disabled' ,command=pushmin)#
+bg3.grid(row =0, column =3)
+#结束游戏
+bg4 =Button(frame_game, text ='结束游戏', state= 'disabled',command= end_game)
+bg4.grid(row =0, column =5)
 ####测试用代码
 # club.player.append(Player('1号工具人'))
 # club.player.append(Player('2号工具人'))
