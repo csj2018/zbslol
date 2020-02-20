@@ -22,6 +22,7 @@ class Player:
         self.site = 0 #上路 中路 下路 游走 辅助
         self.level = 0
         self.active = 0
+        self.age = 16
     def level_cal(self):
         self.level = self.damage + self.control + self.viability + self.farm + self.carry + self.support#待定
     def add_point(self, point):
@@ -42,7 +43,6 @@ class Club:
         self.player = []
         self.cs = 0 #界面选中的
         self.cv = 0 #改名字
-
 class Character:
     def __init__(self, player,num,sv_flag =0):
         self.num = num
@@ -58,6 +58,7 @@ class Character:
         self.defence = 0 #a/(x+a)为有效伤害公式a=10时有：x=0，受100%伤害；x=10,受50%伤害
         self.controltime = 1.2
         self.controlcd = 0
+        self.tpcd = 0#70
         self.name = player.name
         self.site = player.site
         self.d = player.damage + player.state
@@ -72,47 +73,43 @@ class Character:
         self.dead_flag = 0
         self.kda = [0,0,0]
     def cal(self):
-        self.damage= 40 + self.money * 0.012 * self.d * 0.01
+        self.damage= 40 + self.money * 0.018 * self.d * 0.01
         self.healps= 3 + self.money * 0.0007 * self.v * 0.01
         self.hpmax = 500 +self.money * 0.07 * self.v * 0.01
-        self.defence = 5 + self.money *0.0015 * self.v * 0.01
-        self.through = self.money *0.0007 * self.v * 0.01
+        self.defence = 5 + self.money *0.0012 * self.v * 0.01
+        self.through = self.money *0.0005 * self.d * 0.01
         self.controltime = 1.2 + self.money * 0.0003 * self.c * 0.01
         self.controlcd = 20 - self.money * 0.0003 * self.c * 0.01
-
 class Tower:
     def __init__(self,num):
         self.hpmax = num * 3000 + 3000
         self.hp = num * 3000 + 3000
         self.damage = 30 * num + 90
         self.defence = 9 + 3 * num
-
 class Game:
     def __init__(self):
-        self.towers = []
-        self.towerv = []
+        self.tower = [[],[]]#wofang
         self.player = []
-        self.ch = []
-        self.top = ['t1','st2','st3','vt2','vt1']
-        self.mid = ['m1', 'sm2', 'sm3', 'vm2', 'vm1','bases','basev']
-        self.bot = ['b1', 'sb2', 'sb3', 'vb2', 'vb1']
+        self.ch = []#角色
         self.ps = [[],[],[],[],[],[]] #角色分路容器
         self.sc = 0 #选择的角色,查看属性用的
-        self.tmb_avi_s =[0,1,2]#可选择去的路
-        self.tmb_avi_v = [0,1,2]
-        self.spring = []
-        self.gt = [0,0,0]
+        self.tmb_avi =[[0,1,2],[0,1,2]]
+        self.spring = []#泉水玩家坑
+        self.gt = [0,0,0]#游戏时间 分钟 秒钟0.1秒
+        self.resource = [[300,300,300],[300,300,300],[300,300,300]]#9个元素三路资源
+        self.pressure = [[0,0,0],[0,0,0]]
+
     def tower_creat(self):
         for i in range(3):
-            self.towers.append([])
+            self.tower[0].append([])
             for j in range(3):
-                self.towers[i].append(Tower(j))
-        # self.towers[1].append(Tower(4))
+                self.tower[0][i].append(Tower(j))
         for i in range(3):
-            self.towerv.append([])
+            self.tower[1].append([])
             for j in range(3):
-                self.towerv[i].append(Tower(j))
-        # self.towerv[1].append(Tower(4))
+                self.tower[1][i].append(Tower(j))
+    def resource_fresh(self):
+        self.resource = [[300, 300, 300], [300, 300, 300], [300, 300, 300]]
 class Market:
     def __init__(self):
         self.player = []
@@ -121,8 +118,7 @@ class Market:
         for i in range(random.randint(7,15)):
             self.player.append(Player(random_name()))
             self.player[i].random_power()
-
-#随即中文名
+#随机中文名
 def random_name():
     name =''
     i = random.randint(1,2)
