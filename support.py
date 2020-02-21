@@ -23,17 +23,18 @@ class Player:
         self.level = 0
         self.active = 0
         self.age = 16
+        self.mvp_times = 0
     def level_cal(self):
         self.level = self.damage + self.control + self.viability + self.farm + self.carry + self.support#待定
     def add_point(self, point):
         self[str(point)] += 1
-    def random_power(self):
-        self.damage = random.randint(20, 80)
-        self.control = random.randint(20, 80)
-        self.viability = random.randint(20, 80)
-        self.farm = random.randint(20, 80)
-        self.carry = random.randint(20, 80)
-        self.support = random.randint(20, 80)
+    def random_power(self,min=20,max=80):
+        self.damage = random.randint(min, max)
+        self.control = random.randint(min, max)
+        self.viability = random.randint(min, max)
+        self.farm = random.randint(min, max)
+        self.carry = random.randint(min, max)
+        self.support = random.randint(min, max)
         self.fans = random.randint(100, 10000)
 class Club:
     def __init__(self):
@@ -43,8 +44,17 @@ class Club:
         self.player = []
         self.cs = 0 #界面选中的
         self.cv = 0 #改名字
+class Rival:
+    def __init__(self):
+        self.name = '天王俱乐部'
+        self.player = []
+    def random(self):
+        for i in range(5):
+            self.player.append(Player(random_name()))
+            self.player[i].random_power(30, 80)
+            self.player[i].site =i+1
 class Character:
-    def __init__(self, player,num,sv_flag =0):
+    def __init__(self, player,num):
         self.num = num
         self.money = 600
         self.hpmax = 500
@@ -68,16 +78,20 @@ class Character:
         self.carry = player.carry + player.state
         self.support = player.support + player.state
         self.busy = 0
-        self.sv_flag = sv_flag#
         self.tmb_flag = 4 # 0，1，2top mid bot
         self.dead_flag = 0
         self.kda = [0,0,0]
+        self.dtc = 0#对人累计伤害
+        self.dtt = 0#对塔累计伤害
+        self.dtd = 0#累计吸收伤害
+        self.ctc = 0#累计控制时间
+        self.point = 0
     def cal(self):
-        self.damage= 40 + self.money * 0.018 * self.d * 0.01
+        self.damage= 40 + self.money * 0.01 * self.d * 0.01
         self.healps= 3 + self.money * 0.0007 * self.v * 0.01
-        self.hpmax = 500 +self.money * 0.07 * self.v * 0.01
+        self.hpmax = 500 + self.money * 0.07 * self.v * 0.01
         self.defence = 5 + self.money *0.0012 * self.v * 0.01
-        self.through = self.money *0.0005 * self.d * 0.01
+        self.through = self.money *0.0004 * self.d * 0.01
         self.speed = 1.4 - self.money*0.00002 *self.d *0.01
         self.controltime = 2.5 + self.money * 0.00006 * self.c * 0.01
         self.controlcd = 20 - self.money * 0.0003 * self.c * 0.01
@@ -99,7 +113,44 @@ class Game:
         self.gt = [0,0,0]#游戏时间 分钟 秒钟0.1秒
         self.resource = [[300,300,300],[300,300,300],[300,300,300]]#9个元素三路资源
         self.pressure = [[0,0,0],[0,0,0]]
-
+        self.result = 0
+        self.gospeed = 100
+    def cal_mvp(self):
+        point_kda = []
+        point_dtc = []
+        point_dtt = []
+        point_dtd = []
+        point_ctc = []
+        point_sum = []
+        for i in range(5):
+            a = self.ch[5*self.result+i]
+            point_kda.append(((a.kda[0]+a.kda[2])/(a.kda[1]+1),a.num))
+            point_dtc.append((a.dtc,a.num))
+            point_dtt.append((a.dtt,a.num))
+            point_dtd.append((a.dtd,a.num))
+            point_ctc.append((a.ctc,a.num))
+        point_kda.sort()#低到高排序
+        point_dtc.sort()
+        point_dtt.sort()
+        point_dtd.sort()
+        point_ctc.sort()
+        for i in range(5):
+            a = self.ch[5 * self.result + i]
+            a.point = point_kda.index(((a.kda[0]+a.kda[2])/(a.kda[1]+1),a.num))\
+                      + point_dtc.index((a.dtc,a.num))\
+                      + point_dtt.index((a.dtt,a.num))\
+                      + point_dtd.index((a.dtd,a.num))\
+                      + point_ctc.index((a.ctc,a.num))
+            point_sum.append((a.point,a.num))
+        point_sum.sort()
+        mvp = point_sum[4][1]
+        print('MVP的得主是：' +self.ch[mvp].name)
+        print('在比赛中完成了：' + str(self.ch[mvp].kda[0])+'杀'+str(self.ch[mvp].kda[1])+'死'+str(self.ch[mvp].kda[2])+'助攻')
+        print('总英雄伤害：' + str(self.ch[mvp].dtc))
+        print('总建筑伤害：' + str(self.ch[mvp].dtt))
+        print('总吸收伤害：' + str(self.ch[mvp].dtd))
+        print('总控制时间：' + str(self.ch[mvp].ctc))
+        return mvp
     def tower_creat(self):
         for i in range(3):
             self.tower[0].append([])
