@@ -78,7 +78,8 @@ class Character:
         self.hpmax = 500 +self.money * 0.07 * self.v * 0.01
         self.defence = 5 + self.money *0.0012 * self.v * 0.01
         self.through = self.money *0.0005 * self.d * 0.01
-        self.controltime = 1.2 + self.money * 0.0003 * self.c * 0.01
+        self.speed = 1.4 - self.money*0.00002 *self.d *0.01
+        self.controltime = 2.5 + self.money * 0.00006 * self.c * 0.01
         self.controlcd = 20 - self.money * 0.0003 * self.c * 0.01
 class Tower:
     def __init__(self,num):
@@ -94,7 +95,7 @@ class Game:
         self.ps = [[],[],[],[],[],[]] #角色分路容器
         self.sc = 0 #选择的角色,查看属性用的
         self.tmb_avi =[[0,1,2],[0,1,2]]
-        self.spring = []#泉水玩家坑
+        self.spring = [[],[]]#泉水玩家坑
         self.gt = [0,0,0]#游戏时间 分钟 秒钟0.1秒
         self.resource = [[300,300,300],[300,300,300],[300,300,300]]#9个元素三路资源
         self.pressure = [[0,0,0],[0,0,0]]

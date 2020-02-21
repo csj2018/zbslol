@@ -255,13 +255,14 @@ varg1.set('准备')
 def printf(text):
     for i in range(9):
         var_msg[9-i].set(var_msg[8-i].get())
-    var_msg[0].set(text)
+    var_msg[0].set('~~'+text+'~~')
 def recoverbb():#修复加速导致的错位
     for i in range(10):
         bgc[i].grid_forget()
         hpb[i].grid_forget()
     for i in range(10):
-        j =game.ch[i].tmb_flag
+        # a = game.ch[i].dead_flag
+        j = game.ch[i].tmb_flag
         if game.ch[i].dead_flag ==0:
             if i <5:
                 bgc[i].grid(row=11 - game.ps[j].index(i) * 2, column=3 + 2 * j)
@@ -270,8 +271,12 @@ def recoverbb():#修复加速导致的错位
                 bgc[i].grid(row=15 + game.ps[j+3].index(i) * 2, column=3 + 2 * j)
                 hpb[i].grid(row=14 + game.ps[j+3].index(i) * 2, column=3 + 2 * j)
         else:
-            bgc[i].grid(row=15 + game.spring.index(i)*2, column =8)
-            hpb[i].grid(row=14 + game.spring.index(i)*2, column =8)
+            if i <5:
+                bgc[i].grid(row=11 - game.spring[0].index(i) * 2, column=8)
+                hpb[i].grid(row=10 - game.spring[0].index(i) * 2, column=8)
+            else:
+                bgc[i].grid(row=15 + game.spring[1].index(i) * 2, column=8)
+                hpb[i].grid(row=14 + game.spring[1].index(i) * 2, column=8)
 def refreshbb():#界面刷新
     for i in range(10):
         hpb[i].refresh(game.ch[i].hp,game.ch[i].hpmax)
@@ -341,6 +346,7 @@ def end_game():
     for i in range(3):
         thpb[i].grid_forget()
         b_midline[i].grid_forget()
+    b_midline[3].grid_forget()
     for i in range(7):
         e_state[i].grid_forget()
         l_state[i].grid_forget()
@@ -413,9 +419,10 @@ def game_init():#功能是把角色对应的按钮放在相应的位置
         bgc[i]['fg'] = 'blue'
         bgc[i + 5]['fg'] = 'red'
     #中线初始化放置
-    var_midline[0].set('上路河道')
-    var_midline[1].set('中路河道')
-    var_midline[2].set('下路河道')
+    var_midline[0].set('~~上路河道~~')
+    var_midline[1].set('~~中路河道~~')
+    var_midline[2].set('~~下路河道~~')
+    var_midline[3].set('~~双方泉水~~')
     #状态栏初始化
     for i in range(7):
         e_state[i].grid(row=i, column=1)
@@ -423,9 +430,10 @@ def game_init():#功能是把角色对应的按钮放在相应的位置
     for i in range(3):#中线标签和塔血条的初始化
         b_midline[i].grid(row=13, column=3 + 2 * i)
         thpb[i].grid(row=12, column=3 + 2 * i)
+    b_midline[3].grid(row=13, column=8)
     #msg初始化
     for i in range(10):
-        m_game[9-i].grid(columnspan =5)
+        m_game[9-i].grid(columnspan =8)
 def game_time_refresh():
     if game.gt[2] == 9:
         game.gt[2] =0
@@ -440,8 +448,12 @@ def game_time_refresh():
         game.resource_fresh()
 def back(ch):
     ch.dead_flag = 0
+    if ch.num<5:
+        b=0
+    else:
+        b=1
     bgc[ch.num]['bg'] = 'white'
-    game.spring.pop(game.spring.index(ch.num))
+    game.spring[b].pop(game.spring[b].index(ch.num))
     if ch.num < 5:
         game.ps[ch.tmb_flag].append(ch.num)
     else:
@@ -458,9 +470,8 @@ def leave(ch):
     bgc[ch.num]['bg'] ='grey'
     bgc[ch.num].grid_forget()
     hpb[ch.num].grid_forget()
-    game.spring.append(ch.num)
-    bgc[ch.num].grid(row =15+game.spring.index(ch.num)*2, column =8)
-    hpb[ch.num].grid(row =14+game.spring.index(ch.num)*2, column =8)
+    game.spring[b].append(ch.num)
+    recoverbb()
     ch.hp=ch.hpmax
     # ch.busy += 20
     # game.pressure[b][a] +=15
@@ -473,11 +484,8 @@ def dead(ch):
     game.ps[a + 3 * b].pop(game.ps[a + 3 * b].index(ch.num))
     ch.dead_flag =1
     bgc[ch.num]['bg'] ='grey'
-    bgc[ch.num].grid_forget()
-    hpb[ch.num].grid_forget()
-    game.spring.append(ch.num)
-    bgc[ch.num].grid(row =15+game.spring.index(ch.num)*2, column =8)
-    hpb[ch.num].grid(row =14+game.spring.index(ch.num)*2, column =8)
+    game.spring[b].append(ch.num)
+    recoverbb()
     ch.busy += 10 +80*ch.money/50000
     ch.hp = ch.hpmax
     game.pressure[b][a] += 50
@@ -512,20 +520,20 @@ def tower_set(ch):#
     a=''
     b=['上路','中路','下路']
     if ch.num<5:
-        a+='红色方'
+        a+='~红色方'
     else:
-        a+='蓝色方'
+        a+='~蓝色方'
     for i in range(3):
         if ch.tmb_flag == i:
             a+=b[i]
     if ch.num<5 and len(game.tower[1][ch.tmb_flag])!= 0:
-        a += str(4-len(game.tower[1][ch.tmb_flag])) + '塔'
+        a += str(4-len(game.tower[1][ch.tmb_flag])) + '塔~'
     elif ch.num>=5 and len(game.tower[0][ch.tmb_flag])!= 0:
-        a += str(4 - len(game.tower[0][ch.tmb_flag])) + '塔'
+        a += str(4 - len(game.tower[0][ch.tmb_flag])) + '塔~'
     elif ch.num<5 and len(game.tower[1][ch.tmb_flag])== 0:
-        a ='红色方基地'
+        a ='~~红色方基地~~'
     elif ch.num>=5 and len(game.tower[0][ch.tmb_flag]) == 0:
-        a ='蓝色方基地'
+        a ='~~蓝色方基地~~'
     for i in range(3):
         if ch.tmb_flag == i:
             var_midline[i].set(a)
@@ -702,9 +710,10 @@ for i in range(10):
 b_midline =[]
 #中线label
 var_midline = []
-for i in range(3):
+for i in range(4):
     var_midline.append(StringVar())
     b_midline.append(Button(frame_game, textvariable=var_midline[i],bg ='grey'))
+#时间label
 varg3 = StringVar()
 lg2 = Label(frame_game,textvariable =varg3).grid(row =1,column =2,columnspan = 6)
 #状态栏label
@@ -720,8 +729,8 @@ var_msg = []
 m_game = []
 for i in range(10):
     var_msg.append(StringVar())
-    # var_msg[i].set('1')
-    m_game.append(Message(frame_game_msg,bg = "white",width =200,textvariable =var_msg[i]))
+    var_msg[i].set('~~~~~~~')
+    m_game.append(Message(frame_game_msg,bg = "white",width = 300,textvariable =var_msg[i]))
 
 # l_tower = []
 # e_tower = []
