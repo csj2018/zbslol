@@ -194,8 +194,8 @@ def random_name():
     return name
 class Hpbar:
     def __init__(self,master,height =18,width =100,hpmax =100,hp =100, bg='pink',fg ='green'):
-        self.master =master
-        self.height =height
+        self.master = master
+        self.height = height
         self.width = width
         self.hpmax = hpmax
         self.hp = hp

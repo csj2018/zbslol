@@ -10,16 +10,35 @@ win.geometry('800x600')
 win.title('这不是MOBA')
 club = Club()#初始化俱乐部
 state = State()
-# game = Game()
 market = Market()
 market.creat()
+# def canvassize():
+#     canvas['width']=win.winfo_width()
+#     canvas['height']=win.winfo_height()
+canvas = Canvas(win)
+xbar =Scrollbar(win,orient=HORIZONTAL)
+xbar.pack(side ='bottom',fill='x')
+xbar.configure(command=canvas.xview)
+canvas.configure(xscrollcommand=xbar.set)
+ybar =Scrollbar(win,orient=VERTICAL)
+ybar.pack(side ='right',fill='y')
+ybar.configure(command=canvas.yview)
+canvas.configure(yscrollcommand=ybar.set)
+
+canvas.pack()
+def mobile(event):
+    canvas.configure(scrollregion=canvas.bbox('all'))
+    canvas['width']=win.winfo_width()
+    canvas['height'] = win.winfo_height()
 #初始化各个界面
 frame = []
-frame_root =Frame(win)
-frame_root.grid()
-frame_mkt =Frame(win)
-frame_club =Frame(win)
-frame_game =Frame(win)
+frame_root =Frame(canvas)
+win.bind("<Configure>",mobile)
+# frame_root.place(x=0,y=0)
+frame_mkt =Frame(canvas)
+frame_club =Frame(canvas)
+frame_game =Frame(canvas)
+canvas.create_window((0,0), window=frame_root,anchor=NW)
 frame = [frame_root, frame_mkt, frame_club, frame_game]
 lr1 = Label(frame_root, text = "资金：").grid(row = 0, column = 0)
 lr2 = Label(frame_root, textvariable = club.money).grid(row = 0, column = 1)
@@ -28,6 +47,8 @@ lr2 = Label(frame_root, textvariable = club.money).grid(row = 0, column = 1)
 def donate():
     club.money.set(club.money.get()+50000)
     print('%s俱乐部获得来自土豪粉丝的5w赞助！')
+    print(win.winfo_width())
+    print(win.winfo_height())
 
 brz = Button(frame_root, text = '拉赞助', command = donate)
 brz.grid(row =0, column = 2)
@@ -48,10 +69,8 @@ def refresh_win(f):
 #页面转换
 def change_win(f):
     refresh_win(f)
-    for i in range(len(frame)):
-        frame[i].grid_forget()
-    f.grid()
-
+    canvas.delete('all')
+    canvas.create_window((0,0), window=f,anchor=NW)
 br1 = Button(frame_root, text ='交易市场', command = lambda :change_win(frame_mkt))#市场按钮
 br1.grid(row = 1, column = 1)
 
@@ -340,10 +359,11 @@ def play():
         bg2['state']=='disabled'
 def end_game():
     varg1.set('准备')
-    bg2['state']='normal'
-    bg3['state']='disabled'
-    bg4['state']='disabled'
-    bg5['text']='1倍速'
+    bg2['state'] = 'normal'
+    bg3['state'] = 'disabled'
+    bg4['state'] = 'disabled'
+    bg5['state'] = 'disabled'
+    bg5['text'] = '1倍速'
     for i in range(10):
         bgc[i].grid_forget()
         hpb[i].grid_forget()
@@ -391,6 +411,7 @@ def checkgame():
 def game_init():#功能是把角色对应的按钮放在相应的位置
     bg4['state'] = 'normal'
     bg3['state'] = 'normal'
+    bg5['state'] = 'normal'
     #角色属性初始化
     for i in range(10):
         game.ch[i].cal()
@@ -402,6 +423,7 @@ def game_init():#功能是把角色对应的按钮放在相应的位置
         bgc[i]['text'] = game.ch[i].name + '（' + str(game.ch[i].site) + '号位）'
         hpb[i].hpmax=game.ch[i].hpmax
         hpb[i].hp = game.ch[i].hp
+    #修正血条后续加上###############################
     for i in [0,5]:
         r =random.randint(0,1)
         if r ==0:
@@ -779,7 +801,7 @@ def gospeed():
     elif bg5['text'] == '10倍速':
         game.gospeed = 100
         bg5['text'] = '1倍速'
-bg5 =Button(frame_game,text ='1倍速',command=gospeed)
+bg5 =Button(frame_game,text ='1倍速',state ='disabled',command=gospeed)
 bg5.grid(row =0, column =3)
 def pushmin():
     for i in range(600):
@@ -806,18 +828,21 @@ bg4.grid(row =0, column =7)
 #     club.player[i].random_power()
 
 def save():
-    data = []
-    data.append(club.player)
-    f = open('save.pckl', 'wb')
-    pickle.dump(data, f)
-    f.close()
+    if tkinter.messagebox.askyesno('提示', '确认要执行存档操作吗？'):
+        data = []
+        data.append(club.player)
+        f = open('save.pckl', 'wb')
+        pickle.dump(data, f)
+        f.close()
 
 def load():
-    f = open('save.pckl', 'rb')
-    data = pickle.load(f)
-    f.close()
-    club.player.clear()
-    club.player +=data[0]
+    if tkinter.messagebox.askyesno('提示', '确认要执行读取操作吗？'):
+        f = open('save.pckl', 'rb')
+        data = pickle.load(f)
+        f.close()
+        club.player.clear()
+        club.player += data[0]
+        refresh_win(frame_club)
 #menubar
 menubar = Menu(win)
 #　定义一个空的菜单单元
