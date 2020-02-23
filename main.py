@@ -6,15 +6,12 @@ import time
 import pickle
 # <editor-fold desc="开头">
 win =Tk()
-win.geometry('800x600')
+win.geometry('800x600+0+0')
 win.title('这不是MOBA')
 club = Club()#初始化俱乐部
 state = State()
 market = Market()
 market.creat()
-# def canvassize():
-#     canvas['width']=win.winfo_width()
-#     canvas['height']=win.winfo_height()
 canvas = Canvas(win)
 xbar =Scrollbar(win,orient=HORIZONTAL)
 xbar.pack(side ='bottom',fill='x')
@@ -26,7 +23,7 @@ ybar.configure(command=canvas.yview)
 canvas.configure(yscrollcommand=ybar.set)
 
 canvas.pack()
-def mobile(event):
+def mobile(event):#为了适配手机加的滚动条
     canvas.configure(scrollregion=canvas.bbox('all'))
     canvas['width']=win.winfo_width()
     canvas['height'] = win.winfo_height()
@@ -34,51 +31,55 @@ def mobile(event):
 frame = []
 frame_root =Frame(canvas)
 win.bind("<Configure>",mobile)
-# frame_root.place(x=0,y=0)
 frame_mkt =Frame(canvas)
-frame_club =Frame(canvas)
+frame_player =Frame(canvas)
 frame_game =Frame(canvas)
 canvas.create_window((0,0), window=frame_root,anchor=NW)
-frame = [frame_root, frame_mkt, frame_club, frame_game]
-lr1 = Label(frame_root, text = "资金：").grid(row = 0, column = 0)
-lr2 = Label(frame_root, textvariable = club.money).grid(row = 0, column = 1)
-# </editor-fold>
-#战队赞助
-def donate():
-    club.money.set(club.money.get()+50000)
-    print('%s俱乐部获得来自土豪粉丝的5w赞助！')
-    print(win.winfo_width())
-    print(win.winfo_height())
+frame = [frame_root, frame_mkt, frame_player, frame_game]
+#日期
+def refresh_date():
+    var_date.set(str(state.date[0])+'年'+str(state.date[1])+'月'+str(state.date[2])+'日')
+var_date = StringVar()
+lr_date = Label(frame_root, textvariable = var_date).grid(row = 1, column = 0)
+var_date.set(str(state.date[0])+'年'+str(state.date[1])+'月'+str(state.date[2])+'日')
+#俱乐部名称
+var_clubname = StringVar()
+var_clubname.set(club.name)
+lr_clubname = Label(frame_root, textvariable = var_clubname).grid(row = 2, column = 0)
 
-brz = Button(frame_root, text = '拉赞助', command = donate)
-brz.grid(row =0, column = 2)
+#资金
+lr1 = Label(frame_root, text = "资金：").grid(row = 3, column = 0)
+lr2 = Label(frame_root, textvariable = club.money).grid(row = 3, column = 1)
+# </editor-fold>
+
 #页面刷新for市场名单
 def refresh_win(f):
     if f == frame_mkt:
         lbm.delete(0, END)
         for i in range(len(market.player)):
             lbm.insert('end', market.player[i].name)
-    elif f == frame_club:
+    elif f == frame_player:
         lbc1.delete(0, END)
         for i in range(len(club.player)):
             if club.player[i].site != 0:
                 lbc1.insert('end', club.player[i].name + '（ '+ str(club.player[i].site)+'号位）')
             else:
                 lbc1.insert('end', club.player[i].name)
-
+    elif f == frame_root:
+        refresh_date()
 #页面转换
 def change_win(f):
     refresh_win(f)
     canvas.delete('all')
     canvas.create_window((0,0), window=f,anchor=NW)
 br1 = Button(frame_root, text ='交易市场', command = lambda :change_win(frame_mkt))#市场按钮
-br1.grid(row = 1, column = 1)
+br1.grid(row = 0, column = 1)
 
-br2 = Button(frame_root, text = "俱乐部", command = lambda :change_win(frame_club))#俱乐部按钮
-br2.grid(row = 1, column = 0)
+br2 = Button(frame_root, text = "选手管理", command = lambda :change_win(frame_player))#俱乐部按钮
+br2.grid(row = 0, column = 0)
 
 br3 = Button(frame_root, text = '比赛', command = lambda :change_win(frame_game))#模拟比赛按钮
-br3.grid(row = 1, column = 2)
+br3.grid(row = 0, column = 2)
 
 #选手市场部分
 lm1 = Label(frame_mkt, text = '自由市场选手').grid(row = 1, column =0, columnspan =2)
@@ -92,14 +93,9 @@ def checkm(event = None):
         for ii in range(len(market.player)):
             if market.player[ii].name == value:
                 i =ii
-        varm1[0].set(market.player[i].name)
-        varm1[1].set(market.player[i].damage)
-        varm1[2].set(market.player[i].control)
-        varm1[3].set(market.player[i].viability)
-        varm1[4].set(market.player[i].farm)
-        varm1[5].set(market.player[i].carry)
-        varm1[6].set(market.player[i].support)
-        varm1[7].set(market.player[i].fans)
+        a = market.player[i]
+        for j in range(9):
+            varm1[j].set([a.name,a.age,a.damage,a.control,a.viability,a.farm,a.carry,a.support,a.fans][j])
 lbm.bind('<ButtonRelease-1>', checkm)#事件触发
 lbm.bind('<KeyRelease-Up>', checkm)
 lbm.bind('<KeyRelease-Down>', checkm)
@@ -108,17 +104,12 @@ lbm.bind('<KeyRelease-Down>', checkm)
 bm1 = Button(frame_mkt, text = '返回', command = lambda :change_win(frame_root))
 bm1.grid(row =0, column =0)
 lm2 = []
-lm2.append(Label(frame_mkt, text='姓名：').grid(row =3, column =0))
-lm2.append(Label(frame_mkt, text='伤害能力：').grid(row =4, column =0))
-lm2.append(Label(frame_mkt, text='控制能力：').grid(row =5, column =0))
-lm2.append(Label(frame_mkt, text='生存能力：').grid(row =6, column =0))
-lm2.append(Label(frame_mkt, text='发育能力：').grid(row =7, column =0))
-lm2.append(Label(frame_mkt, text='核心能力：').grid(row =8, column =0))
-lm2.append(Label(frame_mkt, text='辅助能力：').grid(row =9, column =0))
-lm2.append(Label(frame_mkt, text='粉丝数目：').grid(row =10, column =0))
 varm1 = []
 em1 = []
-for i in range(8):
+for i in range(9):
+    lm2.append(Label(frame_mkt,text=['姓名：','年龄：','伤害能力：',
+                                     '控制能力：','生存能力：','发育能力：','核心能力：',
+                                     '辅助能力：','粉丝数目：'][i]).grid(row =3+i,column =0))
     varm1.append(StringVar())
     varm1[i].set('')
     em1.append(Entry(frame_mkt, textvariable = varm1[i], state = 'disabled').grid(row =i+3, column =1))
@@ -135,12 +126,12 @@ bm2 = Button(frame_mkt, text = '购买选手', command = buy_player)
 bm2.grid(row = 0, column = 1)
 # </editor-fold>
 
-#俱乐部部分
+#选手管理部分
 
-bc1 = Button(frame_club, text = '返回', command = lambda :change_win(frame_root))
+bc1 = Button(frame_player, text = '返回', command = lambda :change_win(frame_root))
 bc1.grid(row =0, column = 0)
-lc1 = Label(frame_club, text = '选手列表').grid(row =1, column = 0, columnspan = 2)
-lbc1 = Listbox(frame_club)
+lc1 = Label(frame_player, text = '选手列表').grid(row =1, column = 0, columnspan = 2)
+lbc1 = Listbox(frame_player)
 lbc1.grid(row = 2, columnspan = 2)
 def checkc(event = None):
     i = 0
@@ -149,58 +140,80 @@ def checkc(event = None):
         for ii in range(len(club.player)):
             if club.player[ii].name in value:
                 i = ii
-        print(club.player[i].age)
-        varc1[0].set(club.player[i].name)
-        varc1[1].set(club.player[i].damage)
-        varc1[2].set(club.player[i].control)
-        varc1[3].set(club.player[i].viability)
-        varc1[4].set(club.player[i].farm)
-        varc1[5].set(club.player[i].carry)
-        varc1[6].set(club.player[i].support)
-        varc1[7].set(club.player[i].fans)
-        varc1[8].set(club.player[i].potential)
-        varc1[9].set(club.player[i].state)
-        varc1[10].set(club.player[i].site)
+        a = club.player[i]
+        for j in range(12):
+            varc1[j].set([a.name,a.age,a.damage,a.control,a.viability,a.farm,a.carry,a.support,a.fans,a.potential,a.state,a.site][j])
         bc2.grid(row=3, column=2)
-        bc3.grid(row=13, column=2)
+        bc3.grid(row=14, column=2)
 
 #俱乐部界面生成
 lc2 = []
-for i in range(11):
-    lc2.append(Label(frame_club,text =['姓名：','伤害能力：','控制能力：',
+for i in range(12):
+    lc2.append(Label(frame_player,text =['姓名：','年龄','伤害能力：','控制能力：',
                                        '生存能力：','发育能力：','核心能力：','辅助能力：',
                                        '粉丝数目：','属性点：','状态：','位置：'][i]).grid(row=3+i,column =0))
+#属性加点
+bc_add = []
+def bc_add_init():
+    def bc_add1():
+        if varc1[8].get() >0:
+            varc1[1].set(varc1[1].get()+1)
+            varc1[8].set(varc1[8].get()-1)
+    def bc_add2():
+        if varc1[8].get() >0:
+            varc1[2].set(varc1[2].get()+1)
+            varc1[8].set(varc1[8].get()-1)
+    def bc_add3():
+        if varc1[8].get() >0:
+            varc1[3].set(varc1[3].get()+1)
+            varc1[8].set(varc1[8].get()-1)
+    def bc_add4():
+        if varc1[8].get() >0:
+            varc1[4].set(varc1[4].get()+1)
+            varc1[8].set(varc1[8].get()-1)
+    def bc_add5():
+        if varc1[8].get() > 0:
+            varc1[5].set(varc1[5].get()+1)
+            varc1[8].set(varc1[8].get()-1)
+    def bc_add6():
+        if varc1[8].get() >0:
+            varc1[6].set(varc1[6].get()+1)
+            varc1[8].set(varc1[8].get()-1)
+    bc_add.append(Button(frame_player, text="+", command=bc_add1))
+    bc_add.append(Button(frame_player, text="+", command=bc_add2))
+    bc_add.append(Button(frame_player, text="+", command=bc_add3))
+    bc_add.append(Button(frame_player, text="+", command=bc_add4))
+    bc_add.append(Button(frame_player, text="+", command=bc_add5))
+    bc_add.append(Button(frame_player, text="+", command=bc_add6))
+    for i in range(6):
+        bc_add[i].grid(row= 5+i, column=2)
+bc_add_init()
 varc1 = []
 ec1 = []
-for i in range(11):
-    varc1.append(StringVar())
-    varc1[i].set('')
-    ec1.append(Entry(frame_club, textvariable = varc1[i], state = 'disabled'))
+for i in range(12):
+    varc1.append(IntVar())
+    ec1.append(Entry(frame_player, textvariable = varc1[i], state = 'disabled'))
     ec1[i].grid(row =i+3, column =1)
-
+varc1[0] =StringVar()
 #选手位置选择
 varc3 = IntVar()
 varc3.set(1)
-rbc1 =Radiobutton(frame_club, text = '1号位', variable = varc3, value = 1)
-rbc2 =Radiobutton(frame_club, text = '2号位', variable = varc3, value = 2)
-rbc3 =Radiobutton(frame_club, text = '3号位', variable = varc3, value = 3)
-rbc4 =Radiobutton(frame_club, text = '4号位', variable = varc3, value = 4)
-rbc5 =Radiobutton(frame_club, text = '5号位', variable = varc3, value = 5)
-
+rb_site=[]
+for i in range(5):
+    rb_site.append(Radiobutton(frame_player,
+                               text = ['1号位','2号位','3号位','4号位','5号位'][i],
+                               variable = varc3, value = i))
 varc4 = StringVar()
 varc4.set('改位置')
 def change_site():
     if lbc1.curselection() != ():
         if varc4.get() == '改位置':
-            rbc1.grid(row=11, column=3)
-            rbc2.grid(row=11, column=4)
-            rbc3.grid(row=11, column=5)
-            rbc4.grid(row=11, column=6)
-            rbc5.grid(row=11, column=7)
+            for i in range(5):
+                rb_site[i].grid(row=14, column=3+i)
             value = lbc1.get(lbc1.curselection())
             for i in range(len(club.player)):
                 if club.player[i].name in value:
-                    club.cs = i
+                    state.cs = i
             varc4.set('确定')
             lbc1['state'] = 'disabled'
         else:
@@ -208,18 +221,15 @@ def change_site():
                 if club.player[i].site == varc3.get():
                     club.player[i].site = 0
                     club.player[i].active = 0
-            club.player[club.cs].active = 1
-            club.player[club.cs].site = varc3.get()
+            club.player[state.cs].active = 1
+            club.player[state.cs].site = varc3.get()
             lbc1['state'] = 'normal'
             varc4.set('改位置')
-            rbc1.grid_forget()
-            rbc2.grid_forget()
-            rbc3.grid_forget()
-            rbc4.grid_forget()
-            rbc5.grid_forget()
-            refresh_win(frame_club)
+            for i in range(5):
+                rb_site[i].grid_forget()
+            refresh_win(frame_player)
 
-bc3 = Button(frame_club, textvariable = varc4, command = change_site)
+bc3 = Button(frame_player, textvariable = varc4, command = change_site)#改名按钮
 
 #改名字
 varc2 = StringVar()
@@ -230,7 +240,7 @@ def change_name():
             value = lbc1.get(lbc1.curselection())
             for i in range(len(club.player)):
                 if club.player[i].name in value:
-                    club.cv = i
+                    state.cv = i
             lbc1['state'] = 'disabled'
             ec1[0]['state'] = 'normal'
             varc2.set('确定修改')
@@ -239,9 +249,9 @@ def change_name():
         lbc1['state'] = 'normal'
         ec1[0]['state'] = 'disabled'
         varc2.set('修改姓名')
-        refresh_win(frame_club)
+        refresh_win(frame_player)
 
-bc2 = Button(frame_club, textvariable = varc2, command = change_name)#改名按钮
+bc2 = Button(frame_player, textvariable = varc2, command = change_name)#改名按钮
 #开除选手
 # varc3 = StringVar()
 # varc3.set('开除选手')
@@ -252,9 +262,9 @@ def fire():
             if club.player[i].name in value:
                 if tkinter.messagebox.askyesno('提示', '要执行此操作吗'):
                     club.player.pop(i)
-                    refresh_win(frame_club)
+                    refresh_win(frame_player)
 
-bc4 = Button(frame_club, text = '开除选手', command = fire)#开除按钮
+bc4 = Button(frame_player, text = '开除选手', command = fire)#开除按钮
 bc4.grid()
 #俱乐部事件
 lbc1.bind('<ButtonRelease-1>', checkc)
@@ -337,7 +347,7 @@ def refreshgame_time(n=100):
         for i in range(10):
             judgement(game.ch[i])
         refreshbb()
-        win.after(n, lambda :refreshgame_time(game.gospeed))
+        win.after(n, lambda :refreshgame_time(state.speed))
 def refreshgame():#后台的，用来push
     game_time_refresh()
     for i in range(10):
@@ -350,7 +360,7 @@ def play():
         game_init()
     elif varg1.get() == '进行游戏':
         varg1.set('暂停游戏')
-        refreshgame_time(game.gospeed)
+        refreshgame_time(state.speed)
     elif varg1.get() == '暂停游戏':
         varg1.set('进行游戏')
     elif varg1.get() =='开始结算':
@@ -362,12 +372,10 @@ def end_game():
     bg2['state'] = 'normal'
     bg3['state'] = 'disabled'
     bg4['state'] = 'disabled'
-    bg5['state'] = 'disabled'
-    bg5['text'] = '1倍速'
     for i in range(10):
         bgc[i].grid_forget()
         hpb[i].grid_forget()
-        m_game[i].grid_forget()
+        msg_game[i].grid_forget()
         var_msg[i].set('~~~~~~~~~~')
     for i in range(3):
         thpb[i].grid_forget()
@@ -376,13 +384,19 @@ def end_game():
     for i in range(7):
         e_state[i].grid_forget()
         l_state[i].grid_forget()
+    lg_blue.grid_forget()
+    lg_red.grid_forget()
+    var_red.set('')
+    state.refresh_date(3)
+    market.creat()
 def checkgame():
     global game
     game = Game()
     #随机对手
     global rival
-    rival = Rival()
-    rival.random()
+    rival = Club()
+    rival.random_player()
+    rival.random_name()
     a = []
     for i in range(len(club.player)):  # 判定是否能开始
         a.append((club.player[i].site,club.player[i]))
@@ -396,11 +410,15 @@ def checkgame():
                     game.player.append(a[4-i][1])
                 for i in range(5):
                     game.player.append(rival.player[i])
+                    var_blue.set(club.name)
+                    var_red.set(rival.name)
             else:
                 for i in range(5):
                     game.player.append(rival.player[i])
                 for i in range(5):
                     game.player.append(a[4-i][1])
+                    var_red.set(club.name)
+                    var_blue.set(rival.name)
             for i in range(10):
                 game.ch.append(Character(game.player[i],i))
             varg1.set('游戏初始化')
@@ -411,7 +429,6 @@ def checkgame():
 def game_init():#功能是把角色对应的按钮放在相应的位置
     bg4['state'] = 'normal'
     bg3['state'] = 'normal'
-    bg5['state'] = 'normal'
     #角色属性初始化
     for i in range(10):
         game.ch[i].cal()
@@ -464,7 +481,10 @@ def game_init():#功能是把角色对应的按钮放在相应的位置
     b_midline[3].grid(row=13, column=8)
     #msg初始化
     for i in range(10):
-        m_game[9-i].grid(columnspan =8)
+        msg_game[9-i].grid(columnspan =8)
+    #俱乐部名称
+    lg_blue.grid(row =11,column =0,columnspan = 2)
+    lg_red.grid(row=15, column=0, columnspan=2)
 def game_time_refresh():
     if game.gt[2] == 9:
         game.gt[2] =0
@@ -772,6 +792,11 @@ for i in range(4):
 #时间label
 varg3 = StringVar()
 lg2 = Label(frame_game,textvariable =varg3).grid(row =1,column =2,columnspan = 6)
+#俱乐部名称label
+var_blue=StringVar()
+var_red=StringVar()
+lg_blue =Label(frame_game,textvariable =var_blue,fg='blue')
+lg_red =Label(frame_game,textvariable =var_red,fg='red')
 #状态栏label
 l_state = []
 e_state = []
@@ -782,26 +807,26 @@ for i in range(7):
     l_state.append(Label(frame_game_state,text =['姓名','KDA','经济','伤害','穿透','防御','恢复'][i]))
 #msg
 var_msg = []
-m_game = []
+msg_game = []
 for i in range(10):
     var_msg.append(StringVar())
     var_msg[i].set('~~~~~~~')
-    m_game.append(Message(frame_game_msg,bg = "white",width = 300,textvariable =var_msg[i]))
+    msg_game.append(Message(frame_game_msg,bg = "white",width = 300,textvariable =var_msg[i]))
 #倍速
 def gospeed():
     if bg5['text']=='1倍速':
-        game.gospeed = 50
+        state.speed = 50
         bg5['text'] = '2倍速'
     elif bg5['text']=='2倍速':
-        game.gospeed = 20
+        state.speed = 20
         bg5['text'] = '5倍速'
     elif bg5['text'] == '5倍速':
-        game.gospeed = 10
+        state.speed = 10
         bg5['text'] = '10倍速'
     elif bg5['text'] == '10倍速':
-        game.gospeed = 100
+        state.speed = 100
         bg5['text'] = '1倍速'
-bg5 =Button(frame_game,text ='1倍速',state ='disabled',command=gospeed)
+bg5 =Button(frame_game,text ='1倍速',command=gospeed)
 bg5.grid(row =0, column =3)
 def pushmin():
     for i in range(600):
@@ -818,19 +843,10 @@ bg3.grid(row =0, column =5)
 bg4 =Button(frame_game, text ='结束游戏', state= 'disabled',command= end_game)
 bg4.grid(row =0, column =7)
 ####测试用代码
-# club.player.append(Player('1号工具人'))
-# club.player.append(Player('2号工具人'))
-# club.player.append(Player('3号工具人'))
-# club.player.append(Player('4号工具人'))
-# club.player.append(Player('5号工具人'))
-# for i in range(5):
-#     club.player[i].site =1+i
-#     club.player[i].random_power()
 
 def save():
     if tkinter.messagebox.askyesno('提示', '确认要执行存档操作吗？'):
-        data = []
-        data.append(club.player)
+        data = [state,club.player]
         f = open('save.pckl', 'wb')
         pickle.dump(data, f)
         f.close()
@@ -840,16 +856,38 @@ def load():
         f = open('save.pckl', 'rb')
         data = pickle.load(f)
         f.close()
-        club.player.clear()
-        club.player += data[0]
-        refresh_win(frame_club)
+        state=data[0]
+        club.player = data[1]
+        refresh_win(frame_player)
+def mode_change():
+    if state.mode ==0:
+        if tkinter.messagebox.askyesno('提示', '确认要切换到手机模式么？'):
+            state.mode = 1
+            for i in range(10):
+                hpb[i].height = 50
+                hpb[i].width = 400
+                msg_game[i]['width'] = 600
+            for i in range(3):
+                thpb[i].height = 50
+                thpb[i].width = 400
+    else:
+        if tkinter.messagebox.askyesno('提示', '确认要切换到电脑模式么？'):
+            state.mode = 0
+            for i in range(10):
+                hpb[i].height = 18
+                hpb[i].width = 100
+                msg_game[i]['width'] = 200
+            for i in range(3):
+                thpb[i].height = 18
+                thpb[i].width = 100
 #menubar
 menubar = Menu(win)
 #　定义一个空的菜单单元
 filemenu = Menu(menubar, tearoff=0)  # tearoff意为下拉
-menubar.add_cascade(label='开始', menu=filemenu)
+menubar.add_cascade(label='菜单', menu = filemenu)
 filemenu.add_command(label='保存',command = save)#存储功能实装！
 filemenu.add_command(label='载入',command = load)
+filemenu.add_command(label='手机/电脑',command = mode_change)
 # 分隔线
 filemenu.add_separator()
 filemenu.add_command(label='退出', command = win.quit)
