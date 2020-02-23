@@ -3,8 +3,20 @@ from tkinter import *
 #state
 class State:
     def __init__(self):
-        self.player =[]
-        self.frame =[]
+        self.mode = 0
+        self.speed = 100
+        self.date = [1,1,1]
+        self.cs = 0  # 界面选中的
+        self.cv = 0  # 改名字
+    def refresh_date(self,day =1,month =0):
+        self.date[2]+=day
+        self.date[1]+=month
+        if self.date[2]>30:
+            self.date[2]-=30
+            self.date[1]+=1
+        if self.date[1]>12:
+            self.date[1]-=12
+            self.date[0]+=1
 #选手对象
 class Player:
     def __init__(self,name =''):
@@ -29,6 +41,7 @@ class Player:
     def add_point(self, point):
         self[str(point)] += 1
     def random_power(self,min=20,max=80):
+        self.age = random.randint(12, 30)
         self.damage = random.randint(min, max)
         self.control = random.randint(min, max)
         self.viability = random.randint(min, max)
@@ -36,23 +49,27 @@ class Player:
         self.carry = random.randint(min, max)
         self.support = random.randint(min, max)
         self.fans = random.randint(100, 10000)
+
 class Club:
     def __init__(self):
-        self.name = '天王俱乐部'
+        self.name = 'XX俱乐部'
         self.money = IntVar()
-        self.money.set(0)
+        self.money.set(100000)
         self.player = []
-        self.cs = 0 #界面选中的
-        self.cv = 0 #改名字
-class Rival:
-    def __init__(self):
-        self.name = '天王俱乐部'
-        self.player = []
-    def random(self):
+    def random_player(self):
         for i in range(5):
             self.player.append(Player(random_name()))
             self.player[i].random_power(30, 80)
             self.player[i].site =i+1
+    def random_name(self):
+        a = ['圣光','无敌','Best','Chaos','Evil','皇家','自由','狂','Dog']
+        b = ['独轮车','大爹','Gay','Cat','Home','Wings','龙','俱乐部','宇宙','Gaming','巢穴','野人']
+        r = random.randint(0,len(a)-1)
+        self.name = a[r]
+        r = random.randint(0, len(b) - 1)
+        self.name+= b[r]
+
+
 class Character:
     def __init__(self, player,num):
         self.num = num
@@ -135,6 +152,7 @@ class Game:
         point_dtd.sort()
         point_ctc.sort()
         for i in range(5):
+            self.player[5 * self.result + i].potential+=2
             a = self.ch[5 * self.result + i]
             a.point = point_kda.index(((a.kda[0]+a.kda[2])/(a.kda[1]+1),a.num))\
                       + point_dtc.index((a.dtc,a.num))\
@@ -144,6 +162,7 @@ class Game:
             point_sum.append((a.point,a.num))
         point_sum.sort()
         mvp = point_sum[4][1]
+        self.player[mvp].potential+=2
         print('MVP的得主是：' +self.ch[mvp].name)
         print('在比赛中完成了：' + str(self.ch[mvp].kda[0])+'杀'+str(self.ch[mvp].kda[1])+'死'+str(self.ch[mvp].kda[2])+'助攻')
         print('总英雄伤害：' + str(self.ch[mvp].dtc))
