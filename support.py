@@ -51,15 +51,15 @@ class Player:
         self.fans = random.randint(100, 10000)
 
 class Club:
-    def __init__(self):
-        self.name = 'XX俱乐部'
+    def __init__(self, name = 'LGD'):
+        self.name = name
         self.money = IntVar()
         self.money.set(100000)
         self.player = []
-    def random_player(self):
+    def random_player(self, biasmin =30, biasmax =60):
         for i in range(5):
             self.player.append(Player(random_name()))
-            self.player[i].random_power(30, 80)
+            self.player[i].random_power(biasmin, biasmax)
             self.player[i].site =i+1
     def random_name(self):
         a = ['圣光','无敌','Best','Chaos','Evil','皇家','自由','狂','Dog']
@@ -69,9 +69,14 @@ class Club:
         r = random.randint(0, len(b) - 1)
         self.name+= b[r]
 
+    def creat_player(self, namelist, biasmin =30, biasmax =80):
+        for i in range(5):
+            self.player.append(Player(namelist[i]))
+            self.player[i].random_power(biasmin, biasmax)
+            self.player[i].site =i+1
 
 class Character:
-    def __init__(self, player,num):
+    def __init__(self, player, num):
         self.num = num
         self.money = 600
         self.hpmax = 500
@@ -104,20 +109,22 @@ class Character:
         self.ctc = 0#累计控制时间
         self.point = 0
     def cal(self):
-        self.damage= 40 + self.money * 0.01 * self.d * 0.01
-        self.healps= 3 + self.money * 0.0007 * self.v * 0.01
+        self.damage= 40 + self.money * 0.015 * self.d * 0.01
+        self.healps= 3 + self.money * 0.0005 * self.v * 0.01
         self.hpmax = 500 + self.money * 0.07 * self.v * 0.01
         self.defence = 5 + self.money *0.0012 * self.v * 0.01
         self.through = self.money *0.0004 * self.d * 0.01
         self.speed = 1.4 - self.money*0.00002 *self.d *0.01
         self.controltime = 2.5 + self.money * 0.00006 * self.c * 0.01
         self.controlcd = 20 - self.money * 0.0003 * self.c * 0.01
+
 class Tower:
     def __init__(self,num):
-        self.hpmax = num * 3000 + 3000
-        self.hp = num * 3000 + 3000
+        self.hpmax = num * 2000 + 1500
+        self.hp = num * 2000 + 1500
         self.damage = 30 * num + 90
         self.defence = 9 + 3 * num
+
 class Game:
     def __init__(self):
         self.tower = [[],[]]#wofang
@@ -181,6 +188,7 @@ class Game:
                 self.tower[1][i].append(Tower(j))
     def resource_fresh(self):
         self.resource = [[300, 300, 300], [300, 300, 300], [300, 300, 300]]
+
 class Market:
     def __init__(self):
         self.player = []
@@ -224,7 +232,11 @@ class Hpbar:
         length = self.width*hp/hpmax
         self.line = self.canvas.create_rectangle(0,0,length+1,self.height+1, fill=self.fg)
         self.lt = self.canvas.create_text(self.width/2,self.height/2,text = str(int(self.hp))+'/'+str(int(self.hpmax)))
-
+    def change(self):
+        self.canvas['width']=self.width
+        self.canvas['height'] = self.height
+        length = self.width * self.hp / self.hpmax
+        self.canvas.coords(self.line,(0,0,length+1,self.height+1))
     def grid(self,row =0,column = 0,rowspan =1,columnspan =1):
         self.canvas.grid(row=row, column=column, rowspan=rowspan, columnspan=columnspan)
     def grid_forget(self):
