@@ -6,8 +6,9 @@ class State:
         self.mode = 0
         self.speed = 100
         self.date = [1,1,1]
-        self.cs = 0  # 界面选中的
-        self.cv = 0  # 改名字
+        self.cs = 0  # 俱乐部界面选中选手编号
+        self.yzflag = 0
+        self.yznum = 0
     def refresh_date(self,day =1,month =0):
         self.date[2]+=day
         self.date[1]+=month
@@ -51,7 +52,7 @@ class Player:
         self.fans = random.randint(100, 10000)
 
 class Club:
-    def __init__(self, name = 'LGD'):
+    def __init__(self, name = '基德俱乐部'):
         self.name = name
         self.money = IntVar()
         self.money.set(100000)
@@ -111,11 +112,11 @@ class Character:
     def cal(self):
         self.damage= 40 + self.money * 0.015 * self.d * 0.01
         self.healps= 3 + self.money * 0.0005 * self.v * 0.01
-        self.hpmax = 500 + self.money * 0.07 * self.v * 0.01
+        self.hpmax = 500 + self.money * 0.12 * self.v * 0.01
         self.defence = 5 + self.money *0.0012 * self.v * 0.01
         self.through = self.money *0.0004 * self.d * 0.01
         self.speed = 1.4 - self.money*0.00002 *self.d *0.01
-        self.controltime = 2.5 + self.money * 0.00006 * self.c * 0.01
+        self.controltime = 2.2 + self.money * 0.0001 * self.c * 0.01
         self.controlcd = 20 - self.money * 0.0003 * self.c * 0.01
 
 class Tower:
