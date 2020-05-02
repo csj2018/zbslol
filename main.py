@@ -7,10 +7,12 @@ import pickle
 # <editor-fold desc="开头">
 win =Tk()
 win.geometry('800x600+0+0')
-win.title('这不是MOBA')
+win.title('基德俱乐部模拟器')
 myclub = Club()#初始化俱乐部
 state = State()
 club_list =[]
+club_list.append(Club('PSG.LGD'))
+club_list[len(club_list)-1].creat_player(['Chalice', 'SoMnus丶M', 'Old Eleven', 'Fy', 'Xnova'],45,85)
 club_list.append(Club('OG'))
 club_list[len(club_list)-1].creat_player(['Ana', 'Topson', 'Ceb', 'JerAx', 'N0tail'],45,85)
 club_list.append(Club('CDEC'))
@@ -62,11 +64,64 @@ var_date.set(str(state.date[0])+'年'+str(state.date[1])+'月'+str(state.date[2]
 #俱乐部名称
 var_clubname = StringVar()
 var_clubname.set(myclub.name)
-lr_clubname = Label(frame_root, textvariable = var_clubname).grid(row = 2, column = 0)
+lr_clubname = Label(frame_root, textvariable = var_clubname).grid(row = 3, column = 0)
 
+#俱乐部切换
+def clubchange(myclub):
+    if var_clubchange.get() == '切换俱乐部':
+        var_clubchange.set('确认')
+        lbr1.grid(row=3, column=2)
+        lbr1.delete(0, END)
+        for i in range(len(club_list)):
+                lbr1.insert('end', club_list[i].name)
+    else:
+        var_clubchange.set('切换俱乐部')
+        if lbr1.curselection() != ():
+            value = lbr1.get(lbr1.curselection())
+            for i in range(len(club_list)):
+                if club_list[i].name == value:
+                    the_one = i
+            club_list.append(Club(myclub.name))
+            club_list[-1].player = myclub.player[:]
+            myclub.name = club_list[the_one].name
+            myclub.player = club_list[the_one].player[:]
+            var_clubname.set(myclub.name)
+            club_list.pop(the_one)
+            lbr1.delete(0, END)
+            lbr1.grid_forget()
+var_clubchange = StringVar()
+var_clubchange.set('切换俱乐部')
+br_clubchange = Button(frame_root, textvariable = var_clubchange, command = lambda: clubchange(myclub)).grid(row = 3, column = 1)
+lbr1 = Listbox(frame_root)
+#俱乐部约战
+var_yzclubname = StringVar()
+var_yzclubname.set('无')
+lr_yzclubname = Label(frame_root, textvariable = var_yzclubname).grid(row = 4, column = 0)
+def preclub():
+    if var_preclub.get() == '约战俱乐部':
+        var_preclub.set('确认')
+        lbr2.grid(row=4, column=2)
+        lbr2.delete(0, END)
+        for i in range(len(club_list)):
+                lbr2.insert('end', club_list[i].name)
+    else:
+        var_preclub.set('约战俱乐部')
+        if lbr2.curselection() != ():
+            value = lbr2.get(lbr2.curselection())
+            for i in range(len(club_list)):
+                if club_list[i].name == value:
+                    state.yzflag = 1
+                    state.yznum = i
+            lbr2.delete(0, END)
+            lbr2.grid_forget()
+            var_yzclubname.set(value)
+var_preclub = StringVar()
+var_preclub.set('约战俱乐部')
+br_preclub = Button(frame_root, textvariable = var_preclub, command = preclub).grid(row = 4, column = 1)
+lbr2 = Listbox(frame_root)
 #资金
-lr1 = Label(frame_root, text = "资金：").grid(row = 3, column = 0)
-lr2 = Label(frame_root, textvariable = myclub.money).grid(row = 3, column = 1)
+lr1 = Label(frame_root, text = "资金：").grid(row = 2, column = 0)
+lr2 = Label(frame_root, textvariable = myclub.money).grid(row = 2, column = 1)
 # </editor-fold>
 
 #页面刷新for市场名单
@@ -151,13 +206,12 @@ lc1 = Label(frame_player, text = '选手列表').grid(row =1, column = 0, column
 lbc1 = Listbox(frame_player)
 lbc1.grid(row = 2, columnspan = 2)
 def checkc(event = None):
-    i = 0
     if lbc1.curselection() != ():
         value = lbc1.get(lbc1.curselection())
-        for ii in range(len(myclub.player)):
-            if myclub.player[ii].name in value:
-                i = ii
-        a = myclub.player[i]
+        for i in range(len(myclub.player)):
+            if myclub.player[i].name in value:
+                state.cs = i
+        a = myclub.player[state.cs]
         for j in range(12):
             varc1[j].set([a.name,a.age,a.damage,a.control,a.viability,a.farm,a.carry,a.support,a.fans,a.potential,a.state,a.site][j])
         bc2.grid(row=3, column=2)
@@ -176,26 +230,38 @@ def bc_add_init():
         if varc1[9].get() >0:
             varc1[2].set(varc1[2].get()+1)
             varc1[9].set(varc1[9].get()-1)
+            myclub.player[state.cs].damage += 1
+            myclub.player[state.cs].potential -= 1
     def bc_add2():
         if varc1[9].get() >0:
             varc1[3].set(varc1[3].get()+1)
             varc1[9].set(varc1[9].get()-1)
+            myclub.player[state.cs].controll += 1
+            myclub.player[state.cs].potential -= 1
     def bc_add3():
         if varc1[9].get() >0:
             varc1[4].set(varc1[4].get()+1)
             varc1[9].set(varc1[9].get()-1)
+            myclub.player[state.cs].viability += 1
+            myclub.player[state.cs].potential -= 1
     def bc_add4():
         if varc1[9].get() >0:
             varc1[5].set(varc1[5].get()+1)
             varc1[9].set(varc1[9].get()-1)
+            myclub.player[state.cs].farm += 1
+            myclub.player[state.cs].potential -= 1
     def bc_add5():
         if varc1[9].get() > 0:
             varc1[6].set(varc1[6].get()+1)
             varc1[9].set(varc1[9].get()-1)
+            myclub.player[state.cs].carry += 1
+            myclub.player[state.cs].potential -= 1
     def bc_add6():
         if varc1[9].get() >0:
             varc1[7].set(varc1[7].get()+1)
             varc1[9].set(varc1[9].get()-1)
+            myclub.player[state.cs].support += 1
+            myclub.player[state.cs].potential -= 1
     bc_add.append(Button(frame_player, text="+", command=bc_add1))
     bc_add.append(Button(frame_player, text="+", command=bc_add2))
     bc_add.append(Button(frame_player, text="+", command=bc_add3))
@@ -258,12 +324,12 @@ def change_name():
             value = lbc1.get(lbc1.curselection())
             for i in range(len(myclub.player)):
                 if myclub.player[i].name in value:
-                    state.cv = i
+                    state.cs = i
             lbc1['state'] = 'disabled'
             ec1[0]['state'] = 'normal'
             varc2.set('确定修改')
     else:
-        myclub.player[state.cv].name = varc1[0].get()
+        myclub.player[state.cs].name = varc1[0].get()
         lbc1['state'] = 'normal'
         ec1[0]['state'] = 'disabled'
         varc2.set('修改姓名')
@@ -290,10 +356,10 @@ lbc1.bind('<KeyRelease-Up>', checkc)
 lbc1.bind('<KeyRelease-Down>', checkc)
 
 #比赛界面
-frame_game_state =Frame(frame_game)
-frame_game_state.grid(row =1,column =9,rowspan =11, columnspan =5)
-frame_game_msg=LabelFrame(frame_game, bg ='white')
-frame_game_msg.grid(row =13,column =9,rowspan =11, columnspan =5)
+frame_game_state = Frame(frame_game)
+frame_game_state.grid(row =1, column =9, rowspan =11, columnspan =5)
+frame_game_msg = LabelFrame(frame_game, bg ='white')
+frame_game_msg.grid(row =13, column =9, rowspan =11, columnspan =5)
 bg1 = Button(frame_game, text = '返回', command = lambda :change_win(frame_root))
 bg1.grid(row =0,column =0)
 varg1 = StringVar()
@@ -409,14 +475,19 @@ def end_game():
     market.creat()
 def rivalcheck():
     global rival
-    # 随机对手
-    r = random.randint(0,len(club_list)+3)
-    if r >= len(club_list):
-        rival = Club()
-        rival.random_player()
-        rival.random_name()
+    if state.yzflag == 1:
+        rival = club_list[state.yznum]
     else:
-        rival = club_list[r]
+        # 随机对手
+        r = random.randint(0,len(club_list)+3)
+        if r >= len(club_list):
+            rival = Club()
+            rival.random_player()
+            rival.random_name()
+        else:
+            rival = club_list[r]
+    state.yzflag = 0
+    var_yzclubname.set('无')
 def checkgame():
     global game
     game = Game()
@@ -658,7 +729,7 @@ def cal_game():
     printf('总英雄伤害：' + str(int(a.dtc)))
     printf('总建筑伤害：' + str(int(a.dtt)))
     printf('总吸收伤害：' + str(int(a.dtd)))
-    printf('总控制时间：' + str(int(a.ctc)))
+    printf('总控制时间：' + str(int(a.ctc)) + '秒')
 def move(ch, tmb):#num号玩家移动到tmb位置
     printf(ch.name+'移动到'+['上路','中路','下路'][tmb])
     a = ch.tmb_flag
