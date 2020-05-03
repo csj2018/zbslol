@@ -12,9 +12,9 @@ myclub = Club()#初始化俱乐部
 state = State()
 club_list =[]
 club_list.append(Club('PSG.LGD'))
-club_list[len(club_list)-1].creat_player(['Chalice', 'SoMnus丶M', 'Old Eleven', 'Fy', 'Xnova'],45,85)
+club_list[len(club_list)-1].creat_player(['Chalice', 'SoMnus丶M', 'Old Eleven', 'Fy', 'Xnova'],65,90)
 club_list.append(Club('OG'))
-club_list[len(club_list)-1].creat_player(['Ana', 'Topson', 'Ceb', 'JerAx', 'N0tail'],45,85)
+club_list[len(club_list)-1].creat_player(['Ana', 'Topson', 'Ceb', 'JerAx', 'N0tail'],75,90)
 club_list.append(Club('CDEC'))
 club_list[len(club_list)-1].creat_player(['Ame', 'Xm', 'Srf', 'James', '黑凤梨'],40,70)
 club_list.append(Club('VG'))
@@ -80,13 +80,13 @@ def clubchange(myclub):
             value = lbr1.get(lbr1.curselection())
             for i in range(len(club_list)):
                 if club_list[i].name == value:
-                    the_one = i
+                    state.cs = i
             club_list.append(Club(myclub.name))
             club_list[-1].player = myclub.player[:]
-            myclub.name = club_list[the_one].name
-            myclub.player = club_list[the_one].player[:]
+            myclub.name = club_list[state.cs].name
+            myclub.player = club_list[state.cs].player[:]
             var_clubname.set(myclub.name)
-            club_list.pop(the_one)
+            club_list.pop(state.cs)
             lbr1.delete(0, END)
             lbr1.grid_forget()
 var_clubchange = StringVar()
@@ -212,11 +212,17 @@ def checkc(event = None):
             if myclub.player[i].name in value:
                 state.cs = i
         a = myclub.player[state.cs]
-        for j in range(12):
-            varc1[j].set([a.name,a.age,a.damage,a.control,a.viability,a.farm,a.carry,a.support,a.fans,a.potential,a.state,a.site][j])
+        for j in range(12):#选手属性显示
+            varc1[j].set([a.name,a.age,a.damage,a.control,a.viability,a.farm,a.carry,a.support,a.fans,a.potential,cal_state(a.state),a.site][j])
         bc2.grid(row=3, column=2)
         bc3.grid(row=14, column=2)
-
+def cal_state(state):
+    if state < -3:
+        state = -3
+    elif state > 3:
+        state = 3
+    a = ['摆烂','糟糕透顶','糟糕','一般','神勇','陈独秀','1V9'][state+3]
+    return a
 #俱乐部界面生成
 lc2 = []
 for i in range(12):
@@ -236,7 +242,7 @@ def bc_add_init():
         if varc1[9].get() >0:
             varc1[3].set(varc1[3].get()+1)
             varc1[9].set(varc1[9].get()-1)
-            myclub.player[state.cs].controll += 1
+            myclub.player[state.cs].control += 1
             myclub.player[state.cs].potential -= 1
     def bc_add3():
         if varc1[9].get() >0:
@@ -278,7 +284,7 @@ for i in range(12):
     varc1.append(IntVar())
     ec1.append(Entry(frame_player, textvariable = varc1[i], state = 'disabled'))
     ec1[i].grid(row =i+3, column =1)
-varc1.pop(12)
+varc1.pop(12)#忘了为什么了
 #选手位置选择
 varc3 = IntVar()
 varc3.set(1)
@@ -439,6 +445,9 @@ def refreshgame():#后台的，用来push
 def play():
     if varg1.get() == '准备':
         checkgame()
+        #清理信息框
+        for i in range(10):
+            printf('~~~')
     elif varg1.get() == '游戏初始化':
         varg1.set('进行游戏')
         game_init()
@@ -720,6 +729,7 @@ def final(a):
     else:
         b = '红色方获胜！！'
     printf(b)
+    bg4['state'] = 'disabled'
     varg1.set('开始结算')
 def cal_game():
     mvp = game.cal_mvp()
@@ -730,6 +740,9 @@ def cal_game():
     printf('总建筑伤害：' + str(int(a.dtt)))
     printf('总吸收伤害：' + str(int(a.dtd)))
     printf('总控制时间：' + str(int(a.ctc)) + '秒')
+    #选手转态变化触发
+    for i in range(len(myclub.player)):
+        myclub.player[i].state = random.randint(-3,3)
 def move(ch, tmb):#num号玩家移动到tmb位置
     printf(ch.name+'移动到'+['上路','中路','下路'][tmb])
     a = ch.tmb_flag
@@ -768,12 +781,12 @@ def damage_behave(ch):
             if ch.num<5:
                 for i in range(len(game.ps[ch.tmb_flag])):
                     n = game.ps[ch.tmb_flag][i]
-                    game.ch[n].kda[2]+=1
-                    game.ch[n].money+=50
+                    game.ch[n].kda[2] += 1
+                    game.ch[n].money += 50
             else:
                 for i in range(len(game.ps[ch.tmb_flag+3])):
                     n = game.ps[ch.tmb_flag+3][i]
-                    game.ch[n].kda[2]+=1
+                    game.ch[n].kda[2] += 1
                     game.ch[n].money += 50
             dead(target)
             ch.money += 150
@@ -941,6 +954,16 @@ bg4.grid(row =0, column =7)
 
 def save():
     if tkinter.messagebox.askyesno('提示', '确认要执行存档操作吗？'):
+        #切回原俱乐部
+        if myclub.name != '基德俱乐部':
+            for i in range(len(club_list)):
+                if club_list[i].name == '基德俱乐部':
+                    state.cs = i
+            club_list.append(Club(myclub.name))
+            club_list[-1].player = myclub.player[:]
+            myclub.name = club_list[state.cs].name
+            myclub.player = club_list[state.cs].player[:]
+            club_list.pop(state.cs)
         data = [state,myclub.player]
         f = open('save.pckl', 'wb')
         pickle.dump(data, f)

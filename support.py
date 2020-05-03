@@ -68,7 +68,7 @@ class Club:
         r = random.randint(0,len(a)-1)
         self.name = a[r]
         r = random.randint(0, len(b) - 1)
-        self.name+= b[r]
+        self.name += b[r]
 
     def creat_player(self, namelist, biasmin =30, biasmax =80):
         for i in range(5):
@@ -94,12 +94,12 @@ class Character:
         self.tpcd = 0#70
         self.name = player.name
         self.site = player.site
-        self.d = player.damage + player.state
-        self.c = player.control + player.state
-        self.v = player.viability + player.state
-        self.f = player.farm + player.state
-        self.carry = player.carry + player.state
-        self.support = player.support + player.state
+        self.d = player.damage + player.state * 3
+        self.c = player.control + player.state * 3
+        self.v = player.viability + player.state * 3
+        self.f = player.farm + player.state * 3
+        self.carry = player.carry + player.state * 3
+        self.support = player.support + player.state * 3
         self.busy = 0
         self.tmb_flag = 4 # 0，1，2top mid bot
         self.dead_flag = 0
@@ -115,7 +115,7 @@ class Character:
         self.hpmax = 500 + self.money * 0.12 * self.v * 0.01
         self.defence = 5 + self.money *0.0012 * self.v * 0.01
         self.through = self.money *0.0004 * self.d * 0.01
-        self.speed = 1.4 - self.money*0.00002 *self.d *0.01
+        self.speed = 1.4 - self.money*0.00002 * self.d *0.01
         self.controltime = 2.2 + self.money * 0.0001 * self.c * 0.01
         self.controlcd = 20 - self.money * 0.0003 * self.c * 0.01
 
