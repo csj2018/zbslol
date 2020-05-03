@@ -22,11 +22,11 @@ club_list[len(club_list)-1].creat_player(['Eurus', 'Ori', 'Yang', 'pyw', 'Dy'],4
 club_list.append(Club('Aster'))
 club_list[len(club_list)-1].creat_player(['Sccc', 'ChYuan', 'Xxs', 'BoBoKa', 'Fade'],40,70)
 club_list.append(Club('RNG'))
-club_list[len(club_list)-1].creat_player(['monet', 'Setsu', 'Flywin', 'jiechu', 'X'],40,70)
+club_list[len(club_list)-1].creat_player(['monet', 'Setsu', 'Flywin', 'Sep', 'Super'],40,70)
 club_list.append(Club('Ehome'))
-club_list[len(club_list)-1].creat_player(['Sylar', 'NTS', 'Faith_bian', 'XinQ', 'Y'],40,70)
+club_list[len(club_list)-1].creat_player(['Sylar', 'NothingToSay', 'Faith_bian', 'XinQ', 'Y'],40,70)
 club_list.append(Club('SAG'))
-club_list[len(club_list)-1].creat_player(['圣子华炼', 'DD斩首', 'OP', 'FelixCiaoBa','RedPanda'],40,70)
+club_list[len(club_list)-1].creat_player(['圣子华炼God_King', 'DD斩首', 'OP', 'FelixCiaoBa','RedPanda'],40,70)
 club_list.append(Club('IG'))
 club_list[len(club_list)-1].creat_player(['flyfly', 'Emo', 'JT', 'KaKa','Oli'],40,70)
 market = Market()
@@ -144,6 +144,10 @@ def change_win(f):
     refresh_win(f)
     canvas.delete('all')
     canvas.create_window((0,0), window=f,anchor=NW)
+
+def report_check():
+    for i in range(len(state.report)):
+        print(state.report[i])
 br1 = Button(frame_root, text ='交易市场', command = lambda :change_win(frame_mkt))#市场按钮
 br1.grid(row = 0, column = 1)
 
@@ -152,6 +156,9 @@ br2.grid(row = 0, column = 0)
 
 br3 = Button(frame_root, text = '比赛', command = lambda :change_win(frame_game))#模拟比赛按钮
 br3.grid(row = 0, column = 2)
+
+br4 = Button(frame_root, text = '查看上局战报', command = report_check)#模拟比赛按钮
+br4.grid(row = 0, column = 3)
 
 #选手市场部分
 lm1 = Label(frame_mkt, text = '自由市场选手').grid(row = 1, column =0, columnspan =2)
@@ -371,6 +378,8 @@ bg1.grid(row =0,column =0)
 varg1 = StringVar()
 varg1.set('准备')
 #关键部分准备游戏
+def reportcreat(text):
+    state.report.append('[' + str(game.gt[0]) + ':' + str(game.gt[1]) + '.' + str(game.gt[2]) + '] '+ text)
 def printf(text):
     for i in range(9):
         var_msg[9-i].set(var_msg[8-i].get())
@@ -516,6 +525,7 @@ def checkgame():
                     game.player.append(rival.player[i])
                     var_blue.set(myclub.name)
                     var_red.set(rival.name)
+                state.report.append('比赛开始，对阵双方分别是蓝色方的【' + myclub.name + '】和红色方【' + rival.name + '】')
             else:
                 for i in range(5):
                     game.player.append(rival.player[i])
@@ -523,6 +533,7 @@ def checkgame():
                     game.player.append(a[4-i][1])
                     var_red.set(myclub.name)
                     var_blue.set(rival.name)
+                state.report.append('比赛开始，对阵双方分别是蓝色方的【' + rival.name + '】和红色方【' + myclub.name + '】')
             for i in range(10):
                 game.ch.append(Character(game.player[i],i))
             varg1.set('游戏初始化')
@@ -531,6 +542,8 @@ def checkgame():
     else:
         tkinter.messagebox.showinfo('提示', '选手人数不足！')
 def game_init():#功能是把角色对应的按钮放在相应的位置
+    #清理上局的战报
+    state.report.clear()
     bg4['state'] = 'normal'
     bg3['state'] = 'normal'
     #角色属性初始化
@@ -540,10 +553,31 @@ def game_init():#功能是把角色对应的按钮放在相应的位置
     #塔初始化
     game.tower_creat()
     #分路按钮和血条初始化放置
+    hero_list =["齐天大圣","神谕者","大地之灵","恐怖利刃","孽主","地狱领主",
+         "天穹守望者","军团指挥官","凤凰","上古巨神","寒冬飞龙","炸弹人",
+         "灰烬之灵","钢背兽","天怒法师","巨牙海民","巨魔战将","蛇发女妖","地精撕裂者","双头龙",
+         "魅惑魔女","先知","死灵飞龙","地精修补匠","暗影恶魔","暗影萨满","食人魔魔法师","沉默术士",
+         "祈求者","圣骑士","光之守卫","干扰者","大魔导师","黑暗贤者","殁境神蚀者","受折磨的灵魂","蝙蝠骑士",
+         "极寒幽魂","暗影牧师","秀逗魔导士","宙斯","风行者","赏金猎人","复仇之魂","熊战士","圣堂刺客","卓尔游侠",
+         "矮人直升机","风暴之灵","隐形刺客","月之公主","仙女龙","幻影长矛手","娜迦海妖","变体精灵","遗忘法师",
+         "月之骑士","水晶室女","死亡先知","痛苦女王","德鲁伊","术士","主宰","瘟疫法师","谜团","巫医","虚空假面",
+         "鱼人夜行者","冥界亚龙","剃刀","地卜师","剧毒术士","幽鬼","影魔","幻影刺客","编织者","半人猛犸","司夜刺客","不朽尸王",
+         "育母蜘蛛","混沌骑士","骷髅弓箭手","血魔","狼人","裂魂人","末日使者","狙击手","恶魔巫师","暗夜魔王","噬魂鬼","半人马战行者",
+         "精灵守卫","树精卫士","酒仙","炼金术士","神灵武士","全能骑士","发条技师","龙骑士","巫妖","兽王",
+         "海军上将","骷髅王","潮汐猎人","鱼人守卫","山岭巨人","流浪剑客","撼地者","沙王","屠夫","敌法师","斧王","祸乱之源"]
+    state.report.append('经过一系列紧张的Ban/Pick，双方选人如下：')
     for i in range(10):
-        bgc[i]['text'] = game.ch[i].name + '（' + str(game.ch[i].site) + '号位）'
+        r = random.randint(0,len(hero_list)-1)
+        game.ch[i].hero = hero_list.pop(r)
+        game.ch[i].nh = game.ch[i].name + '【' + game.ch[i].hero + '】'
+        bgc[i]['text'] = game.ch[i].name + '（' + game.ch[i].hero + '）'
         hpb[i].hpmax=game.ch[i].hpmax
         hpb[i].hp = game.ch[i].hp
+        if i == 0:
+            state.report.append('蓝色方【'+ var_blue.get() + '】')
+        elif i == 5:
+            state.report.append('红色方【' + var_red.get() + '】')
+        state.report.append(str(game.ch[i].site) + '号位' + game.ch[i].name + '操刀【' + game.ch[i].hero + '】')
     #修正血条后续加上###############################
     for i in [0,5]:
         r =random.randint(0,1)
@@ -664,10 +698,10 @@ def swim(ch):
     return swim_flag
 def search_target(ch):
     target = 10
-    if ch.num<5 and game.ps[ch.tmb_flag+3] !=[]:
+    if ch.num < 5 and game.ps[ch.tmb_flag+3] !=[]:
         r = random.randint(0, len(game.ps[ch.tmb_flag+3]) - 1)
         target = game.ps[ch.tmb_flag+3][r]
-    elif ch.num>=5 and game.ps[ch.tmb_flag] !=[]:
+    elif ch.num >= 5 and game.ps[ch.tmb_flag] !=[]:
         r = random.randint(0, len(game.ps[ch.tmb_flag]) - 1)
         target = game.ps[ch.tmb_flag][r]
     return target# 返回的是编号
@@ -720,14 +754,17 @@ def hit_tower(ch):
         thpb[b].refresh(game.tower[1-a][b][0].hp,game.tower[1-a][b][0].hpmax)
         if game.tower[1-a][b][0].hp <=0:#击破塔
             printf(ch.name+'击破'+var_midline[b].get())
+            reportcreat(ch.nh+'击破'+var_midline[b].get())
             for i in range(5):
                 game.ch[5*a+i].money += 200
             game.tower[1-a][b].pop(0)
 def final(a):
     if a == 0:
         b = '蓝色方获胜！！'
+        reportcreat('面对对方激烈的攻势，红色方打出GG！')
     else:
         b = '红色方获胜！！'
+        reportcreat('面对对方激烈的攻势，蓝色方打出GG！')
     printf(b)
     bg4['state'] = 'disabled'
     varg1.set('开始结算')
@@ -740,11 +777,18 @@ def cal_game():
     printf('总建筑伤害：' + str(int(a.dtt)))
     printf('总吸收伤害：' + str(int(a.dtd)))
     printf('总控制时间：' + str(int(a.ctc)) + '秒')
+    reportcreat('MVP的得主是：' + a.name)
+    reportcreat('在比赛中完成了：' + str(a.kda[0]) + '杀' + str(a.kda[1]) + '死' + str(a.kda[2]) + '助攻')
+    reportcreat('总英雄伤害：' + str(int(a.dtc)))
+    reportcreat('总建筑伤害：' + str(int(a.dtt)))
+    reportcreat('总吸收伤害：' + str(int(a.dtd)))
+    reportcreat('总控制时间：' + str(int(a.ctc)) + '秒')
     #选手转态变化触发
     for i in range(len(myclub.player)):
         myclub.player[i].state = random.randint(-3,3)
 def move(ch, tmb):#num号玩家移动到tmb位置
     printf(ch.name+'移动到'+['上路','中路','下路'][tmb])
+    reportcreat(ch.nh+'收到队友呼救，支援到'+['上路','中路','下路'][tmb])
     a = ch.tmb_flag
     b = ch.num
     bgc[b].grid_forget()
@@ -774,7 +818,14 @@ def damage_behave(ch):
         target.dtd +=ch.damage
         ch.busy += ch.speed
         if target.hp <= 0:
-            printf(ch.name+'击杀'+target.name)
+            printf(ch.nh+'击杀'+target.nh)
+            r = random.randint(0,2)
+            if r == 0:
+                reportcreat(ch.nh+'抓住'+target.nh+'的走位失误,完成击杀！')
+            elif r ==1:
+                reportcreat(ch.nh+'在野区抓到逛街的'+target.nh+'完成击杀！')
+            else:
+                reportcreat(ch.nh+'对'+target.nh+'持续进行消耗，最终越塔强杀！')
             ch.kda[0]+=1
             target.kda[1]+=1
             ch.kda[2]-=1
