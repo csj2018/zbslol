@@ -9,6 +9,7 @@ class State:
         self.cs = 0  # 俱乐部界面选中选手编号
         self.yzflag = 0
         self.yznum = 0
+        self.report = []
     def refresh_date(self,day =1,month =0):
         self.date[2]+=day
         self.date[1]+=month
@@ -79,6 +80,8 @@ class Club:
 class Character:
     def __init__(self, player, num):
         self.num = num
+        self.hero = ''
+        self.nh = ''
         self.money = 600
         self.hpmax = 500
         self.hp = 500
@@ -119,6 +122,7 @@ class Character:
         self.controltime = 2.2 + self.money * 0.0001 * self.c * 0.01
         self.controlcd = 20 - self.money * 0.0003 * self.c * 0.01
 
+
 class Tower:
     def __init__(self,num):
         self.hpmax = num * 2000 + 1500
@@ -140,6 +144,7 @@ class Game:
         self.pressure = [[0,0,0],[0,0,0]]
         self.result = 0
         self.gospeed = 100
+        self.side = 0 #选边情况0为蓝色
     def cal_mvp(self):
         point_kda = []
         point_dtc = []
@@ -171,12 +176,6 @@ class Game:
         point_sum.sort()
         mvp = point_sum[4][1]
         self.player[mvp].potential+=2
-        print('MVP的得主是：' +self.ch[mvp].name)
-        print('在比赛中完成了：' + str(self.ch[mvp].kda[0])+'杀'+str(self.ch[mvp].kda[1])+'死'+str(self.ch[mvp].kda[2])+'助攻')
-        print('总英雄伤害：' + str(self.ch[mvp].dtc))
-        print('总建筑伤害：' + str(self.ch[mvp].dtt))
-        print('总吸收伤害：' + str(self.ch[mvp].dtd))
-        print('总控制时间：' + str(self.ch[mvp].ctc))
         return mvp
     def tower_creat(self):
         for i in range(3):
