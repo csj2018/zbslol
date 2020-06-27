@@ -4,11 +4,13 @@ from tkinter import ttk
 import tkinter.messagebox
 import time
 import pickle
+import copy
 # <editor-fold desc="开头">
 win =Tk()
 win.geometry('800x600+0+0')
 win.title('基德俱乐部模拟器')
 myclub = Club()#初始化俱乐部
+jcclub = Club()
 state = State()
 club_list =[]
 club_list.append(Club('PSG.LGD'))
@@ -53,8 +55,15 @@ win.bind("<Configure>",mobile)
 frame_mkt =Frame(canvas)
 frame_player =Frame(canvas)
 frame_game =Frame(canvas)
+frame_weibo =Frame(canvas)
+frame_j =Frame(canvas)
 canvas.create_window((0,0), window=frame_root,anchor=NW)
-frame = [frame_root, frame_mkt, frame_player, frame_game]
+frame = [frame_root, frame_mkt, frame_player, frame_game, frame_weibo, frame_j]
+#初始化杰出
+jc = Player('杰出哥')
+jc.random_power(min = 25, max = 45)
+jc.site = 1
+jc.cal_ladder()
 #日期
 def refresh_date():
     var_date.set(str(state.date[0])+'年'+str(state.date[1])+'月'+str(state.date[2])+'日')
@@ -121,7 +130,7 @@ br_preclub = Button(frame_root, textvariable = var_preclub, command = preclub).g
 lbr2 = Listbox(frame_root)
 #资金
 lr1 = Label(frame_root, text = "资金：").grid(row = 2, column = 0)
-lr2 = Label(frame_root, textvariable = myclub.money).grid(row = 2, column = 1)
+#lr2 = Label(frame_root, textvariable = myclub.money).grid(row = 2, column = 1)
 # </editor-fold>
 
 #页面刷新for市场名单
@@ -139,6 +148,14 @@ def refresh_win(f):
                 lbc1.insert('end', myclub.player[i].name)
     elif f == frame_root:
         refresh_date()
+    elif f == frame_weibo:
+        refresh_weibo()
+    elif f == frame_j:
+        for i in range(12):  # 杰出属性显示
+            varj1[i].set(
+                [jc.name, jc.ladder, jc.damage, jc.control, jc.viability, jc.farm, jc.carry, jc.support, jc.fans, jc.potential,
+                 cal_state(jc.state), jc.site][i])
+
 #页面转换
 def change_win(f):
     refresh_win(f)
@@ -148,6 +165,17 @@ def change_win(f):
 def report_check():
     for i in range(len(state.report)):
         print(state.report[i])
+
+def next_day():
+    state.date[2] += 1
+    if state.date[2] == 31:
+        state.date[2] = 0
+        state.data[1] += 1
+    if state.date[1] == 13:
+        state.date[1] = 1
+        state.date[0] += 1
+    refresh_date()
+    
 br1 = Button(frame_root, text ='交易市场', command = lambda :change_win(frame_mkt))#市场按钮
 br1.grid(row = 0, column = 1)
 
@@ -159,6 +187,98 @@ br3.grid(row = 0, column = 2)
 
 br4 = Button(frame_root, text = '查看上局战报', command = report_check)#模拟比赛按钮
 br4.grid(row = 0, column = 3)
+
+br5 = Button(frame_root, text = '微博', command = lambda :change_win(frame_weibo))#微博
+br5.grid(row = 0, column = 4)
+
+br6 = Button(frame_root, text = '下个比赛日', command = next_day)#微博
+br6.grid(row = 1, column = 1)
+
+def change_win_j(f):
+    if f == frame_j:
+        state.wsjc =1
+    else:
+        state.wsjc =0
+    change_win(f)
+
+br7 = Button(frame_root, text = '启动我是杰出Alpha', command = lambda :change_win_j(frame_j))#我是杰出
+br7.grid(row = 0, column = 5)
+
+#我是阿杰界面
+bj1 = Button(frame_j, text = '返回', command = lambda :change_win_j(frame_root))
+bj1.grid(row =0, column = 0)
+
+lj1 = []
+for i in range(12):
+    lj1.append(Label(frame_j,text =['姓名：','天梯积分','伤害能力：','控制能力：',
+                                       '生存能力：','发育能力：','核心能力：','辅助能力：',
+                                       '粉丝数目：','属性点：','状态：','位置：'][i]).grid(row=3+i,column =0))
+varj1 = []
+ej1 = []
+for i in range(12):
+    varj1.append(IntVar())
+varj1[9] = IntVar()
+for i in range(12):#选手属性显示
+    varj1[i].set([jc.name,jc.ladder,jc.damage,jc.control,jc.viability,jc.farm,jc.carry,jc.support,jc.fans,jc.potential,cal_state(jc.state),jc.site][i])
+
+#杰出属性加点
+bj_add = []
+def bj_add_init():
+    def bj_add1():
+        if varj1[9].get() >0:
+            varj1[2].set(varj1[2].get()+1)
+            varj1[9].set(varj1[9].get()-1)
+            jc.damage += 1
+            jc.potential -= 1
+    def bj_add2():
+        if varj1[9].get() >0:
+            varj1[3].set(varj1[3].get()+1)
+            varj1[9].set(varj1[9].get()-1)
+            jc.control += 1
+            jc.potential -= 1
+    def bj_add3():
+        if varj1[9].get() >0:
+            varj1[4].set(varj1[4].get()+1)
+            varj1[9].set(varj1[9].get()-1)
+            jc.viability += 1
+            jc.potential -= 1
+    def bj_add4():
+        if varj1[9].get() >0:
+            varj1[5].set(varj1[5].get()+1)
+            varj1[9].set(varj1[9].get()-1)
+            jc.farm += 1
+            jc.potential -= 1
+    def bj_add5():
+        if varj1[9].get() > 0:
+            varj1[6].set(varj1[6].get()+1)
+            varj1[9].set(varj1[9].get()-1)
+            jc.carry += 1
+            jc.potential -= 1
+    def bj_add6():
+        if varj1[9].get() >0:
+            varj1[7].set(varj1[7].get()+1)
+            varj1[9].set(varj1[9].get()-1)
+            jc.support += 1
+            jc.potential -= 1
+    bj_add.append(Button(frame_j, text="+", command=bj_add1))
+    bj_add.append(Button(frame_j, text="+", command=bj_add2))
+    bj_add.append(Button(frame_j, text="+", command=bj_add3))
+    bj_add.append(Button(frame_j, text="+", command=bj_add4))
+    bj_add.append(Button(frame_j, text="+", command=bj_add5))
+    bj_add.append(Button(frame_j, text="+", command=bj_add6))
+    for i in range(6):
+        bj_add[i].grid(row= 5+i, column=2)
+bj_add_init()
+for i in range(12):
+    varj1.append(IntVar())
+    ej1.append(Entry(frame_j, textvariable = varj1[i], state = 'disabled'))
+    ej1[i].grid(row =i+3, column =1)
+varj1.pop(12)#忘了为什么了
+#杰出位置选择
+
+#天梯单排
+bj2 = Button(frame_j, text = '比赛', command = lambda :change_win(frame_game))#模拟比赛按钮
+bj2.grid(row = 0, column = 1)
 
 #选手市场部分
 lm1 = Label(frame_mkt, text = '自由市场选手').grid(row = 1, column =0, columnspan =2)
@@ -205,6 +325,32 @@ bm2 = Button(frame_mkt, text = '购买选手', command = buy_player)
 bm2.grid(row = 0, column = 1)
 # </editor-fold>
 
+#微博界面
+bw1 = Button(frame_weibo, text = '返回', command = lambda :change_win(frame_root))
+bw1.grid(row =0, column = 0)
+
+mw1 = []
+mw2 = []
+def weibo_creat():
+    if game.result == 0:#蓝色方获胜
+        winner = var_blue.get()
+        loser = var_red.get()
+    else:
+        winner = var_red.get()
+        loser = var_blue.get()
+    name = ['@ROTK：', '@Fade乌龙院：', '@LGD电子俱乐部：', '@Esport海涛：', '@斗鱼杰出哥：', '@Iceforg：', '@G胖：', '@Inflame：',
+            '@BurNing：', '@AMS：', '@IG_Ana：', '@Faker：']
+    says = [loser + '下次干回来啊！', '这把' + winner + '发挥得太好了', loser + '这局打的是个什么东西？！', loser + '简直是被' + winner + '摁在地上摩擦……',
+            '今年ti就看' + winner + '的了！', loser + '不如解散了吧?', winner + '硬实力冠军啊！恭喜' + winner, loser+'！！！' + '经典刷了送，看哭了！',
+            loser + '这局被b爆了啊']
+    for i in range(7):
+        state.weibo_name.append(name[random.randint(0, len(name) - 1)])
+        state.weibo_says.append(says[random.randint(0, len(says) - 1)])
+def refresh_weibo():
+    l = len(state.weibo_name)
+    for i in range(l):
+        mw1.append(Message(frame_weibo,text = state.weibo_name[-i], fg ='blue', width = 120, justify ='right', anchor ='e').grid(row = 2*i+1, column = 1))
+        mw2.append(Message(frame_weibo,text = state.weibo_says[-i], width = 800, justify = 'left', anchor ='w').grid(row = 2*i+1, column = 2, rowspan = 2))
 #选手管理部分
 
 bc1 = Button(frame_player, text = '返回', command = lambda :change_win(frame_root))
@@ -223,13 +369,6 @@ def checkc(event = None):
             varc1[j].set([a.name,a.age,a.damage,a.control,a.viability,a.farm,a.carry,a.support,a.fans,a.potential,cal_state(a.state),a.site][j])
         bc2.grid(row=3, column=2)
         bc3.grid(row=14, column=2)
-def cal_state(state):
-    if state < -3:
-        state = -3
-    elif state > 3:
-        state = 3
-    a = ['摆烂','糟糕透顶','糟糕','一般','神勇','陈独秀','1V9'][state+3]
-    return a
 #俱乐部界面生成
 lc2 = []
 for i in range(12):
@@ -286,12 +425,11 @@ def bc_add_init():
 bc_add_init()
 varc1 = []
 ec1 = []
-varc1.append(StringVar())
 for i in range(12):
     varc1.append(IntVar())
     ec1.append(Entry(frame_player, textvariable = varc1[i], state = 'disabled'))
     ec1[i].grid(row =i+3, column =1)
-varc1.pop(12)#忘了为什么了
+#varc1.pop(12)#忘了为什么了
 #选手位置选择
 varc3 = IntVar()
 varc3.set(1)
@@ -368,12 +506,18 @@ lbc1.bind('<ButtonRelease-1>', checkc)
 lbc1.bind('<KeyRelease-Up>', checkc)
 lbc1.bind('<KeyRelease-Down>', checkc)
 
+def change_win_g():
+    if state.wsjc == 1:
+        change_win(frame_j)
+    else:
+        change_win(frame_root)
+
 #比赛界面
 frame_game_state = Frame(frame_game)
 frame_game_state.grid(row =1, column =9, rowspan =11, columnspan =5)
 frame_game_msg = LabelFrame(frame_game, bg ='white')
 frame_game_msg.grid(row =13, column =9, rowspan =11, columnspan =5)
-bg1 = Button(frame_game, text = '返回', command = lambda :change_win(frame_root))
+bg1 = Button(frame_game, text = '返回', command = lambda :change_win_g())
 bg1.grid(row =0,column =0)
 varg1 = StringVar()
 varg1.set('准备')
@@ -491,56 +635,90 @@ def end_game():
     var_red.set('')
     state.refresh_date(3)
     market.creat()
+    #清理杰出
+    for i in range(len(jcclub.player)):
+        jcclub.player.pop(0)
 def rivalcheck():
     global rival
-    if state.yzflag == 1:
-        rival = club_list[state.yznum]
-    else:
-        # 随机对手
-        r = random.randint(0,len(club_list)+3)
-        if r >= len(club_list):
-            rival = Club()
-            rival.random_player()
-            rival.random_name()
+    if state.wsjc == 0:
+        if state.yzflag == 1:
+            rival = club_list[state.yznum]
         else:
-            rival = club_list[r]
+            # 天梯随机对手
+            r = random.randint(0,len(club_list)+3)
+            if r >= len(club_list):
+                rival = Club()
+                rival.random_player()
+                rival.random_name()
+            else:
+                rival = club_list[r]
+    else:
+        rival = Club()
+        max = int(jc.ladder / 100) + 5
+        rival.random_player(max - 20, max)
     state.yzflag = 0
     var_yzclubname.set('无')
 def checkgame():
+    print('目前杰出的天梯分：' + str(jc.ladder))
     global game
     game = Game()
     rivalcheck()
     a = []
-    for i in range(len(myclub.player)):  # 判定是否能开始
-        a.append((myclub.player[i].site,myclub.player[i]))
-    a.sort(reverse=1)
-    if len(a)>=5:
-        if a[4][0] ==1:#从大到小排列第五个选手位置是1号位
-            print('选手齐全')
-            r = random.randint(0,1)
-            if r ==0:#蓝色方
-                for i in range(5):
-                    game.player.append(a[4-i][1])
-                for i in range(5):
-                    game.player.append(rival.player[i])
+    if state.wsjc == 1:
+        # 天梯队友
+        max = int(jc.ladder / 100) + 5
+        jcclub.player = []
+        jcclub.random_player(max - 20, max)
+        jcclub.player.pop(0)
+        jcclub.player.append(jc)
+        if state.wsjc == 1:
+            var_blue.set("天辉")
+            var_red.set("夜魇")
+            state.report.append('比赛开始，对阵双方分别是蓝色方的【天辉】和红色方【夜魇】')
+        r = random.randint(0, 1)
+        if r == 0:  # 蓝色方
+            for i in range(5):
+                game.player.append(jcclub.player[i])
+            for i in range(5):
+                game.player.append(rival.player[i])
+        else:
+            for i in range(5):
+                game.player.append(rival.player[i])
+            for i in range(5):
+                game.player.append(jcclub.player[i])
+        for i in range(10):
+            game.ch.append(Character(game.player[i], i))
+        varg1.set('游戏初始化')
+    else:
+        for i in range(len(myclub.player)):  # 判定是否能开始
+            a.append((myclub.player[i].site,myclub.player[i]))
+        a.sort(reverse=1)
+        if len(a)>=5:
+            if a[4][0] ==1:#从大到小排列第五个选手位置是1号位
+                r = random.randint(0,1)
+                if r ==0:#蓝色方
+                    for i in range(5):
+                        game.player.append(a[4-i][1])
+                    for i in range(5):
+                        game.player.append(rival.player[i])
                     var_blue.set(myclub.name)
                     var_red.set(rival.name)
-                state.report.append('比赛开始，对阵双方分别是蓝色方的【' + myclub.name + '】和红色方【' + rival.name + '】')
-            else:
-                for i in range(5):
-                    game.player.append(rival.player[i])
-                for i in range(5):
-                    game.player.append(a[4-i][1])
+                    state.report.append('比赛开始，对阵双方分别是蓝色方的【' + myclub.name + '】和红色方【' + rival.name + '】')
+                else:
+                    for i in range(5):
+                        game.player.append(rival.player[i])
+                    for i in range(5):
+                        game.player.append(a[4-i][1])
                     var_red.set(myclub.name)
                     var_blue.set(rival.name)
-                state.report.append('比赛开始，对阵双方分别是蓝色方的【' + rival.name + '】和红色方【' + myclub.name + '】')
-            for i in range(10):
-                game.ch.append(Character(game.player[i],i))
-            varg1.set('游戏初始化')
+                    state.report.append('比赛开始，对阵双方分别是蓝色方的【' + rival.name + '】和红色方【' + myclub.name + '】')
+                for i in range(10):
+                    game.ch.append(Character(game.player[i],i))
+                varg1.set('游戏初始化')
+            else:
+                tkinter.messagebox.showinfo('提示', '选手未分配位置！')
         else:
-            tkinter.messagebox.showinfo('提示', '选手未分配位置！')
-    else:
-        tkinter.messagebox.showinfo('提示', '选手人数不足！')
+            tkinter.messagebox.showinfo('提示', '选手人数不足！')
 def game_init():#功能是把角色对应的按钮放在相应的位置
     #清理上局的战报
     state.report.clear()
@@ -786,6 +964,9 @@ def cal_game():
     #选手转态变化触发
     for i in range(len(myclub.player)):
         myclub.player[i].state = random.randint(-3,3)
+    jc.state = random.randint(-3,3)
+    #weibo更新
+    weibo_creat()
 def move(ch, tmb):#num号玩家移动到tmb位置
     printf(ch.name+'移动到'+['上路','中路','下路'][tmb])
     reportcreat(ch.nh+'收到队友呼救，支援到'+['上路','中路','下路'][tmb])
@@ -1015,19 +1196,25 @@ def save():
             myclub.name = club_list[state.cs].name
             myclub.player = club_list[state.cs].player[:]
             club_list.pop(state.cs)
-        data = [state,myclub.player]
+        data = [state.date, jc, myclub.player]
         f = open('save.pckl', 'wb')
         pickle.dump(data, f)
         f.close()
 
 def load():
     if tkinter.messagebox.askyesno('提示', '确认要执行读取操作吗？'):
+        global jc
         f = open('save.pckl', 'rb')
         data = pickle.load(f)
         f.close()
-        state = data[0]
-        myclub.player = data[1]
+        state.date = data[0]
+        jc = data[1]
+        myclub.player = data[2]
         refresh_win(frame_player)
+        for i in range(12):  # 杰出属性显示
+            varj1[i].set(
+                [jc.name, jc.ladder, jc.damage, jc.control, jc.viability, jc.farm, jc.carry, jc.support, jc.fans, jc.potential,
+                 cal_state(jc.state), jc.site][i])
 def mode_change():
     if state.mode ==0:
         if tkinter.messagebox.askyesno('提示', '确认要切换到手机模式么？'):
@@ -1064,7 +1251,7 @@ filemenu.add_command(label='手机/电脑',command = mode_change)
 # 分隔线
 filemenu.add_separator()
 filemenu.add_command(label='退出', command = win.quit)
-win.config(menu =menubar)
+win.config(menu = menubar)
 
 win.mainloop()
 

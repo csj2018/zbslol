@@ -10,6 +10,10 @@ class State:
         self.yzflag = 0
         self.yznum = 0
         self.report = []
+        self.weibo_name = []
+        self.weibo_says = []
+        self.wsjc = 0
+
     def refresh_date(self,day =1,month =0):
         self.date[2]+=day
         self.date[1]+=month
@@ -38,6 +42,7 @@ class Player:
         self.active = 0
         self.age = 16
         self.mvp_times = 0
+        self.ladder = 7500
     def level_cal(self):
         self.level = self.damage + self.control + self.viability + self.farm + self.carry + self.support#待定
     def add_point(self, point):
@@ -51,12 +56,17 @@ class Player:
         self.carry = random.randint(min, max)
         self.support = random.randint(min, max)
         self.fans = random.randint(100, 10000)
+        #随机状态
+        self.state = random.randint(0,6) - 3
+    def cal_ladder(self):
+        a = self.damage + self.control + self.viability + self.farm + self.carry + self.support
+        self.ladder = int(a * 100 / 6)
+
 
 class Club:
     def __init__(self, name = '基德俱乐部'):
         self.name = name
-        self.money = IntVar()
-        self.money.set(100000)
+        self.money = 1000
         self.player = []
     def random_player(self, biasmin =30, biasmax =60):
         for i in range(5):
@@ -145,7 +155,7 @@ class Game:
         self.result = 0
         self.gospeed = 100
         self.side = 0 #选边情况0为蓝色
-    def cal_mvp(self):
+    def cal_mvp(self):#mvp是个号码
         point_kda = []
         point_dtc = []
         point_dtt = []
@@ -176,6 +186,9 @@ class Game:
         point_sum.sort()
         mvp = point_sum[4][1]
         self.player[mvp].potential+=2
+        for i in range(5):#天梯分
+            self.player[5 * self.result + i].ladder += 30
+            self.player[5 * (1 - self.result) + i].ladder -= 30
         return mvp
     def tower_creat(self):
         for i in range(3):
@@ -249,8 +262,11 @@ class Hpbar:
         self.canvas.delete(self.lt)
         self.lt = self.canvas.create_text(self.width/2,self.height/2,text = str(int(self.hp))+'/'+str(int(self.hpmax)))
 
-
-
-
-
+def cal_state(state):
+    if state < -3:
+        state = -3
+    elif state > 3:
+        state = 3
+    a = ['摆烂','糟糕透顶','糟糕','一般','神勇','陈独秀','1V9'][state+3]
+    return a
 
